@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1405069396 source:d:\c\nonameyet\cjson\cjson.c
+	<string.h>
+	<stdio.h>
+	<math.h>
+	<stdlib.h>
+	<float.h>
+	<limits.h>
+	<ctype.h>
+	"cJSON.h"
+
+1405069396 d:\c\nonameyet\cjson\cjson.h
+
