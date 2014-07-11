@@ -1,22 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <algorithm>
-#include <vector>
-using namespace std;
+#include "Main.h"
 
-#include "cJSON/cJSON.h"
-
-#define LEN 20
-#define NUM_NO 7
-
-typedef struct site{
-    char nt[LEN+1];
-    char pam[3+1];
-    int index;
-    int count;
-    double score;
-    vector <int> ot;
-}site;
+ptt ptts[10000];
 
 int pi=0;
 site psb_site[100000];
@@ -24,7 +8,6 @@ site psb_site[100000];
 int ini=0;
 site in_site[100000];
 
-char buffer1[1000],buffer2[1000];
 char str[6000000];
 char wai[6000000];
 
@@ -62,38 +45,77 @@ double score(char *ss,int ini){
         else{
             c++;
             in_site[ini].ot.push_back(i);
-            //for(int si=0;si<20+3;si++) printf("%c",ss[si]); printf("\n");
-            //printf("%s%s %f\n",psb_site[i].nt,psb_site[i].pam,ans);
         }
         sum+=ans;
     }
-    //printf("%f\n\n",sum);
     in_site[ini].score=sum;
     in_site[ini].count=c;
     return sum;
 }
 
+cJSON *Create_array_of_anything(cJSON **objects,int num)
+{
+	int i;cJSON *prev, *root=cJSON_CreateArray();
+	for (i=0;i<num;i++)
+	{
+		if (!i)	root->child=objects[i];
+		else	prev->next=objects[i], objects[i]->prev=prev;
+		prev=objects[i];
+	}
+	return root;
+}
+
 int main(int args,char *argv[]){
-/*
-	char my_json_string[]="{\n\"name\": \"Jack (\\\"Bee\\\") Nimble\", \n\"format\": {\"type\":       \"rect\", \n\"width\":      1920, \n\"height\":     1080, \n\"interlace\":  false,\"frame rate\": 24\n}\n}";
-    printf("%s",my_json_string);
-    cJSON *root = cJSON_Parse(my_json_string);
-    cJSON *format = cJSON_GetObjectItem(root,"format");
-    int framerate = cJSON_GetObjectItem(format,"frame rate")->valueint;
-    cJSON *n=cJSON_GetObjectItem(format,"framerate");
-    printf("\n%d,%d\n",format,n);
-    printf("%d\n",framerate);
-*/
-    return 0;
-    FILE *ff=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.fasta","r");
-    FILE *fp=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.ptt","r");
-    FILE *fout1=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.1.out","w");
-    FILE *fout2=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.2.out","w");
-    FILE *fout3=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.3.out","w");
     char ch;
+
+    FILE *fr=fopen("C:/Users/ZhaoYi/Desktop/SARS/request.txt","r");
+    int ri=0;
+    char request_str[10000];
+    while(fscanf(fr,"%c",&ch)==1){
+        request_str[ri++]=ch;
+    }
+    request_str[ri++]=0;
+    cJSON *request=cJSON_Parse(request_str);
+    cJSON *cJSON_temp;
+    char req_pam[20];
+    strcpy(req_pam,cJSON_GetObjectItem(request,"pam")->valuestring);
+    char req_specie[50];
+    int ptts_num;
+    strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
+    if(strcmp(req_specie,"SARS")==0){
+        ptts_num=ptt_readin(PTT_SARS,ptts);
+    }
+    cJSON_temp=cJSON_GetObjectItem(request,"gene");
+    int req_gene_start,req_gene_end;
+    if(cJSON_temp){
+        char req_gene[20];
+        strcpy(req_gene,cJSON_temp->valuestring);
+        for(int i=0;i<ptts_num;i++){
+            if(strcmp(req_gene,ptts[i].gene)==0){
+                req_gene_start=ptts[i].s;
+                req_gene_end=ptts[i].t;
+                break;
+            }
+        }
+    }else{
+        char req_location[20];
+        strcpy(req_location,cJSON_GetObjectItem(request,"location")->valuestring);
+        sscanf(req_location,"%d..%d",&req_gene_start,&req_gene_end);
+    }
+    /*
+    This part above is for read in JSON-style request.
+    The result stored in req_specie, req_gene_start, req_gene_end, req_pam and so on.
+    */
+
+    printf("specie: %s\n",req_specie);
+    printf("(start,end): (%d,%d)\n",req_gene_start,req_gene_end);
+    printf("pam: %s\n",req_pam);
+
+    FILE *ff=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.fasta","r");
+    FILE *fout2=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.2.out","w");
+    FILE *fout4=fopen("C:/Users/ZhaoYi/Desktop/SARS/SARS.4.out","w");
     int i=1;        //序列的开始
     int j=1,k=1;    //编号的开始
-    int s,t;
 
     readLine(ff);   //读入序列
     while(fscanf(ff,"%c",&ch)==1){
@@ -112,38 +134,9 @@ int main(int args,char *argv[]){
         }
     }
 
-//    printf("%s%s %d %d\n",psb_site[0].nt,psb_site[0].pam,psb_site[0].index-LEN,psb_site[0].index+2);
-//    printf("%s%s %d %d\n",psb_site[pi-1].nt,psb_site[pi-1].pam,psb_site[pi-1].index-LEN,psb_site[pi-1].index+2);
-
-/*    {
-        int i,j;
-        int sum=0,n=0;
-        for(i=0;i<pi;i++){
-            int count=0;
-            for(j=0;j<pi;j++){
-                int k,c=0;
-                for(k=0;k<20;k++){
-                    if(psb_site[i].nt[k]==psb_site[j].nt[k]) c++;
-                }
-                if(c>=20-NUM_NO) count++;
-                if(c>=20-NUM_NO && i!=j){
-                    printf("%s%s ",psb_site[i].nt,psb_site[i].pam);
-                    printf("%s%s\n",psb_site[j].nt,psb_site[i].pam);
-                }
-            }
-            sum+=count;
-            n++;
-        }
-        printf("%d: %d / %d\n",pi,sum,n);
-        printf("%f\n",(double)sum/(double)n);
-    } */
-
-    readLine(fp);   //读入外显子区域，并标记
-    while(fscanf(fp,"%s%s%d%d",buffer1,buffer2,&s,&t)==4){
-        readLine(fp);
-        fprintf(fout1,"#%d ",j++);
-        print_str(fout1,s,t);
-        fprintf(fout1," %d %d\n",s,t);
+    for(j=0;j<ptts_num;j++){
+        int s=ptts[j].s;
+        int t=ptts[j].t;
         for(i=s;i<=t;i++){
             wai[i]=1;
         }
@@ -174,35 +167,46 @@ int main(int args,char *argv[]){
 
     sort(in_site,in_site+ini,cmp_in_site);
 
+    cJSON *root=cJSON_CreateObject();
+    vector<cJSON*> list;
+    list.clear();
+
     for(i=0;i<ini;i++){
-        fprintf(fout3,"#%d %s%s %lf %d %d\n",i+1,in_site[i].nt,in_site[i].pam,in_site[i].score,in_site[i].count,in_site[i].index);
+        cJSON *ans=cJSON_CreateObject();
+        char buffer[30];
+        sprintf(buffer,"#%d",i+1);
+        cJSON_AddStringToObject(ans,"key",buffer);
+        sprintf(buffer,"%s%s",in_site[i].nt,in_site[i].pam);
+        cJSON_AddStringToObject(ans,"grna",buffer);
+        cJSON_AddNumberToObject(ans,"position",in_site[i].index);
+        cJSON_AddNumberToObject(ans,"total_score",in_site[i].score);
+        vector<cJSON*>sublist;
+        sublist.clear();
         for(j=0;j<in_site[i].count;j++){
+            cJSON *subans=cJSON_CreateObject();
             int x=in_site[i].ot[j];
-            fprintf(fout3,"%s%s\n",psb_site[x].nt,psb_site[x].pam);
+            sprintf(buffer,"%s%s",psb_site[x].nt,psb_site[x].pam);
+            cJSON_AddStringToObject(subans,"osequence",buffer);
+            double score=0;
+            int omms=LEN;
+            for(int si=0;si<20;si++) if(in_site[i].nt[si]==psb_site[x].nt[si]){
+                score+=M[si];
+                omms--;
+            }
+            cJSON_AddNumberToObject(subans,"oscore",score);
+            cJSON_AddNumberToObject(subans,"omms",omms);
+            cJSON_AddNumberToObject(subans,"oposition",psb_site[x].index);
+            if(psb_site[x].region) strcpy(buffer,"Intergenic");
+            else strcpy(buffer,"exco");
+            cJSON_AddStringToObject(subans,"oregion",buffer);
+            sublist.push_back(subans);
         }
-        fprintf(fout3,"\n");
+        cJSON_AddItemToObject(ans,"offtarget",Create_array_of_anything(&sublist[0],sublist.size()));
+        list.push_back(ans);
     }
 
-    /*
-    fseek(fp,0,SEEK_SET);
-    readLine(fp);
-    while(fscanf(fp,"%s%s%d%d",buffer1,buffer2,&s,&t)==4){
-        for(i=s;i+2<=t;i++){
-            if((str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'){
-                print_str(fout2,k++,i-LEN,i+2);
-                int ii;
-                for(ii=i-LEN;ii<=i+2;ii++){
-                    if(wai[ii]==0) break;
-                }
-                if(ii==i+2) fprintf(fout2," exon\n");
-                else fprintf(fout2," inter\n");
-            }
-        }
-        for(i=0;i<pi;i++){
-            if(score(psb_site[pi].nt,str+i-20)>=0){
-            }
-        }
-    }
-    */
+    cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
+
+    fprintf(fout4,"%s",cJSON_Print(root));
     return 0;
 }
