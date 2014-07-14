@@ -31,6 +31,15 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Main.cpp" />
+		<Unit filename="Main.h" />
+		<Unit filename="cJSON/LICENSE" />
+		<Unit filename="cJSON/README" />
+		<Unit filename="cJSON/cJSON.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="cJSON/cJSON.h" />
+		<Unit filename="ptt_readin.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
