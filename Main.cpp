@@ -34,8 +34,39 @@ void print_str(FILE *file,int s,int t){
 }
 
 double score(int ini){
+    int Sgc=0,S20=0;
+    double sum=0;
+    int gc=0;
     int i;
-    int c=0;
+
+    for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
+    if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
+    if(in_site[ini].nt[19]!='G') S20=2;
+
+    for(int j=0;j<pi;j++) if(in_site[ini].index!=psb_site[i].index){
+        int nmm=0;
+        int d0=0;
+        double smm=0;
+        for(i=0;i<LEN;i++){
+            if(in_site[ini].nt[i]!=psb_site[j].nt[i]){
+                smm+=M[i];
+                d0+=19-i;
+                nmm++;
+            }
+        }
+        smm=smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
+        if(nmm<=NUM_NO){
+            in_site[ini].ot.push_back(j);
+        }else{
+            smm=0;
+        }
+        sum+=smm;
+    }
+    sum=100-sum-Sgc-S20;
+    in_site[ini].score=sum;
+    in_site[ini].count=in_site[ini].ot.size();
+    return sum;
+/*
     double sum=0;
     for(i=0;i<pi;i++) if(in_site[ini].index!=psb_site[i].index){
         int count=0;
@@ -54,6 +85,7 @@ double score(int ini){
     in_site[ini].score=sum;
     in_site[ini].count=c;
     return sum;
+    */
 }
 
 cJSON *Create_array_of_anything(cJSON **objects,int num)
@@ -247,7 +279,7 @@ int main(int args,char *argv[]){
             cJSON_AddStringToObject(subans,"osequence",buffer);
             double score=0;
             int omms=LEN;
-            for(int si=0;si<20;si++) if(in_site[i].nt[si]==psb_site[x].nt[si]){
+            for(int si=0;si<LEN;si++) if(in_site[i].nt[si]==psb_site[x].nt[si]){
                 score+=M[si];
                 omms--;
             }
