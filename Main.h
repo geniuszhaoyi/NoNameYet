@@ -8,10 +8,13 @@ using namespace std;
 
 #define PTT_SARS 0
 #define PTT_ECOLI 1
+#define PTT_SACCHAROMYCETES 2
 
 #define LEN 20
 #define PAM_LEN 20
 #define NUM_NO 4
+#define NUM_CHROMOSOME 30
+#define GENE_LEN 8000000
 
 #ifdef EXPORT_HELLO_DLL
 #define HELLO_API __declspec(dllexport)
@@ -21,6 +24,7 @@ using namespace std;
 
 typedef struct ptt{
     int s,t;
+    int chromosome;
     char strand;
     char gene[20];
 }ptt;
@@ -30,6 +34,7 @@ typedef struct site{
     char pam[PAM_LEN+1];
     int index;
     int count;
+    int chromosome;
     char region;
     char strand;
     double score;
@@ -44,7 +49,13 @@ typedef struct restrict{
     char rfc25;
 }restrict;
 
-int ptt_readin(int, ptt*);
+struct return_struct{
+    int ptts_num;
+    int len[NUM_CHROMOSOME];
+    int num_chromosome;
+};
+
+struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN]);
 
 extern "C"{
     HELLO_API char *test(char *,int);

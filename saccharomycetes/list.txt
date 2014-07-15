@@ -1,0 +1,16 @@
+1	NC_001133-chromosome1.fna	NC_001133-chromosome1.ptt
+2	NC_001134-chromosome2.fna	NC_001134-chromosome2.ptt
+3	NC_001135-chromosome3.fna	NC_001135-chromosome3.ptt
+4	NC_001136-chromosome4.fna	NC_001136-chromosome4.ptt
+5	NC_001137-chromosome5.fna	NC_001137-chromosome5.ptt
+6	NC_001138-chromosome6.fna	NC_001138-chromosome6.ptt
+7	NC_001139-chromosome7.fna	NC_001139-chromosome7.ptt
+8	NC_001140-chromosome8.fna	NC_001140-chromosome8.ptt
+9	NC_001141-chromosome9.fna	NC_001141-chromosome9.ptt
+10	NC_001142-chromosome10.fna	NC_001142-chromosome10.ptt
+11	NC_001143-chromosome11.fna	NC_001143-chromosome11.ptt
+12	NC_001144-chromosome12.fna	NC_001144-chromosome12.ptt
+13	NC_001145-chromosome13.fna	NC_001145-chromosome13.ptt
+14	NC_001146-chromosome14.fna	NC_001146-chromosome14.ptt
+15	NC_001147-chromosome15.fna	NC_001147-chromosome15.ptt
+16	NC_001148-chromosome16.fna	NC_001148-chromosome16.ptt
