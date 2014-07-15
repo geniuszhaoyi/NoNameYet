@@ -36,79 +36,6 @@ void print_str(FILE *file,int s,int t){
     }
 }
 
-double score(int ini){
-    int Sgc=0,S20=0;
-    double sum=0;
-    int gc=0;
-    int i;
-
-    for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
-    if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
-    if(in_site[ini].nt[19]!='G') S20=2;
-
-    for(int j=0;j<pi;j++) if(in_site[ini].index!=psb_site[i].index){
-        int nmm=0;
-        int d0=0;
-        double smm=0;
-        for(i=0;i<LEN;i++){
-            if(in_site[ini].nt[i]!=psb_site[j].nt[i]){
-                smm+=M[i];
-                d0+=19-i;
-                nmm++;
-            }
-        }
-        smm=smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
-        if(nmm<=NUM_NO){
-            in_site[ini].ot.push_back(j);
-        }else{
-            smm=0;
-        }
-        sum+=smm;
-    }
-    sum=100-sum-Sgc-S20;
-    in_site[ini].score=sum;
-    in_site[ini].count=in_site[ini].ot.size();
-    return sum;
-}
-
-cJSON *Create_array_of_anything(cJSON **objects,int num)
-{
-	int i;cJSON *prev, *root=cJSON_CreateArray();
-	for (i=0;i<num;i++)
-	{
-		if (!i)	root->child=objects[i];
-		else	prev->next=objects[i], objects[i]->prev=prev;
-		prev=objects[i];
-	}
-	return root;
-}
-
-int check_pam(const char *str,const char *pam){
-    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
-    for(;*pam;pam++,str++){
-        if(*pam=='N' || *pam=='n') continue;
-        if(*str!=*pam) return 0;
-    }
-    return 1;
-}
-
-char dna_rev_char(char ch){
-    if(ch=='A' || ch=='a') return 'T';
-    if(ch=='T' || ch=='t') return 'A';
-    if(ch=='C' || ch=='c') return 'G';
-    if(ch=='G' || ch=='g') return 'C';
-    return 'N';
-}
-
-char *dna_rev(char *sr,const char *s,int len){
-    int i;
-    for(i=0;i<len;i++){
-        sr[i]=dna_rev_char(s[len-i-1]);
-    }
-    sr[i]=0;
-    return sr;
-}
-
 int check_rfc(int i){
     char str[LEN+PAM_LEN+3];
     strcpy(str,psb_site[i].nt);
@@ -160,6 +87,87 @@ int check_rfc(int i){
     return 1;
 }
 
+double score(int ii,int *pini){
+    int ini=*pini;
+    int Sgc=0,S20=0;
+    double sum=0;
+    int gc=0;
+    int i;
+
+    if(check_rfc(ini)==0) return -1.0;
+
+    in_site[ini]=psb_site[ii];
+    in_site[ini].ot.clear();
+
+    for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
+    if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
+    if(in_site[ini].nt[19]!='G') S20=2;
+
+    for(int j=0;j<pi;j++) if(in_site[ini].index!=psb_site[j].index){
+        int nmm=0;
+        int d0=0;
+        double smm=0;
+        for(i=0;i<LEN;i++){
+            if(in_site[ini].nt[i]!=psb_site[j].nt[i]){
+                smm+=M[i];
+                d0+=19-i;
+                nmm++;
+            }
+        }
+        if(nmm==0) return -2.0;
+        smm=smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
+        if(nmm<=NUM_NO){
+            in_site[ini].ot.push_back(j);
+        }else{
+            smm=0.0;
+        }
+        sum+=smm;
+    }
+    sum=100-sum-Sgc-S20;
+    in_site[ini].score=sum;
+    in_site[ini].count=in_site[ini].ot.size();
+    (*pini)++;
+    return sum;
+}
+
+cJSON *Create_array_of_anything(cJSON **objects,int num)
+{
+	int i;cJSON *prev, *root=cJSON_CreateArray();
+	for (i=0;i<num;i++)
+	{
+		if (!i)	root->child=objects[i];
+		else	prev->next=objects[i], objects[i]->prev=prev;
+		prev=objects[i];
+	}
+	return root;
+}
+
+int check_pam(const char *str,const char *pam){
+    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
+    for(;*pam;pam++,str++){
+        if(*pam=='N' || *pam=='n') continue;
+        if(*str!=*pam) return 0;
+    }
+    return 1;
+}
+
+char dna_rev_char(char ch){
+    if(ch=='A' || ch=='a') return 'T';
+    if(ch=='T' || ch=='t') return 'A';
+    if(ch=='C' || ch=='c') return 'G';
+    if(ch=='G' || ch=='g') return 'C';
+    return 'N';
+}
+
+char *dna_rev(char *sr,const char *s,int len){
+    int i;
+    for(i=0;i<len;i++){
+        sr[i]=dna_rev_char(s[len-i-1]);
+    }
+    sr[i]=0;
+    return sr;
+}
+
 HELLO_API char *test(char *argv,int smallOutputNumber){
     char ch;
 
@@ -197,6 +205,7 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
         strcpy(req_location,cJSON_GetObjectItem(request,"location")->valuestring);
         sscanf(req_location,"%d..%d",&req_gene_start,&req_gene_end);
     }
+
     char req_rfc[10];
     strcpy(req_rfc,cJSON_GetObjectItem(request,"rfc")->valuestring);
     req_restrict.rfc10=req_rfc[0]-48;
@@ -279,11 +288,8 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
             if(j<psb_site[i].index+LEN) j=0;
             else j=1;
         }
-        if(j && check_rfc(i)){
-            in_site[ini]=psb_site[i];
-            in_site[ini].ot.clear();
-            score(ini);
-            ini++;
+        if(j){
+            score(i,&ini);
         }
     }
 
