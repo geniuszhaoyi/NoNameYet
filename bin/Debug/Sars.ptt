@@ -1,0 +1,15 @@
+Name Accession Start Stop Strand GeneID Locus Locus tag Protein product Length Protein name
+chr	NC_004718.3	265	21485	+	1489680	orf1ab	sars1	NP_828849.2	7073	orf1ab polyprotein
+chr	NC_004718.3	265	13413	+	1489680	orf1ab	sars1	NP_828850.1	4382	orf1a polyprotein
+chr	NC_004718.3	21492	25259	+	1489668	S	sars2	NP_828851.1	1255	E2 glycoprotein precursor
+chr	NC_004718.3	25268	26092	+	1489669	-	sars3a	NP_828852.2	274	hypothetical protein sars3a
+chr	NC_004718.3	25689	26153	+	1489670	-	sars3b	NP_828853.1	154	hypothetical protein sars3b
+chr	NC_004718.3	26117	26347	+	1489671	E	sars4	NP_828854.1	76	protein E
+chr	NC_004718.3	26398	27063	+	1489672	M	sars5	NP_828855.1	221	matrix protein
+chr	NC_004718.3	27074	27265	+	1489673	-	sars6	NP_828856.1	63	hypothetical protein sars6
+chr	NC_004718.3	27273	27641	+	1489674	-	sars7a	NP_828857.1	122	hypothetical protein sars7a
+chr	NC_004718.3	27638	27772	+	1489675	-	sars7b	NP_849175.1	44	hypothetical protein sars7b
+chr	NC_004718.3	27779	27898	+	1489676	-	sars8a	NP_849176.1	39	hypothetical protein sars8a
+chr	NC_004718.3	27864	28118	+	1489677	-	sars8b	NP_849177.1	84	hypothetical protein sars8b
+chr	NC_004718.3	28120	29388	+	1489678	N	sars9a	NP_828858.1	422	nucleocapsid protein
+chr	NC_004718.3	28130	28426	+	1489679	-	sars9b	NP_828859.1	98	hypothetical protein sars9b

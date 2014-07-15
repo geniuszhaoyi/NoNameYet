@@ -1,4 +1,7 @@
+#define EXPORT_HELLO_DLL
 #include "Main.h"
+
+restrict req_restrict;
 
 ptt ptts[1000000];
 
@@ -66,26 +69,6 @@ double score(int ini){
     in_site[ini].score=sum;
     in_site[ini].count=in_site[ini].ot.size();
     return sum;
-/*
-    double sum=0;
-    for(i=0;i<pi;i++) if(in_site[ini].index!=psb_site[i].index){
-        int count=0;
-        double ans=0;
-        for(int si=0;si<LEN;si++) if(in_site[ini].nt[si]==psb_site[i].nt[si]){
-            ans+=M[si];
-            count++;
-        }
-        if(count<20-NUM_NO) ans=0;
-        else{
-            c++;
-            in_site[ini].ot.push_back(i);
-        }
-        sum+=ans;
-    }
-    in_site[ini].score=sum;
-    in_site[ini].count=c;
-    return sum;
-    */
 }
 
 cJSON *Create_array_of_anything(cJSON **objects,int num)
@@ -126,19 +109,62 @@ char *dna_rev(char *sr,const char *s,int len){
     return sr;
 }
 
-int main(int args,char *argv[]){
+int check_rfc(int i){
+    char str[LEN+PAM_LEN+3];
+    strcpy(str,psb_site[i].nt);
+    strcat(str,psb_site[i].pam);
+    if(req_restrict.rfc10){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    if(req_restrict.rfc12){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"GCTAGC")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    if(req_restrict.rfc12a){
+        if(strstr(str,"CAGCTG")) return 0;
+        if(strstr(str,"CTCGAG")) return 0;
+        if(strstr(str,"CCTAGG")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"GCTCTTC")) return 0;
+        if(strstr(str,"GAAGAGC")) return 0;
+    }
+    if(req_restrict.rfc21){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"AGATCT")) return 0;
+        if(strstr(str,"GGATCC")) return 0;
+        if(strstr(str,"CTCGAG")) return 0;
+    }
+    if(req_restrict.rfc23){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    if(req_restrict.rfc25){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"GCCGGC")) return 0;
+        if(strstr(str,"ACCGGT")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    return 1;
+}
+
+HELLO_API char *test(char *argv,int smallOutputNumber){
     char ch;
 
     FILE *ff;
-    FILE *fout4;
-    FILE *fr=fopen("C:/Users/ZhaoYi/Desktop/NNY-Database/request.txt","r");
-    int ri=0;
-    char request_str[10000];
-    while(fscanf(fr,"%c",&ch)==1){
-        request_str[ri++]=ch;
-    }
-    request_str[ri++]=0;
-    cJSON *request=cJSON_Parse(request_str);
+    cJSON *request=cJSON_Parse(argv);
     cJSON *cJSON_temp;
     char req_pam[PAM_LEN+1];
     int req_pam_len;
@@ -148,12 +174,10 @@ int main(int args,char *argv[]){
     int ptts_num;
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
     if(strcmp(req_specie,"SARS")==0){
-        ff=fopen("C:/Users/ZhaoYi/Desktop/NNY-Database/SARS.fasta","r");
-        fout4=fopen("C:/Users/ZhaoYi/Desktop/NNY-Database/result.out","w");
+        ff=fopen("SARS.fasta","r");
         ptts_num=ptt_readin(PTT_SARS,ptts);
     }else if(strcmp(req_specie,"E.coli")==0){
-        ff=fopen("C:/Users/ZhaoYi/Desktop/NNY-Database/NC_017626.fna","r");
-        fout4=fopen("C:/Users/ZhaoYi/Desktop/NNY-Database/result.out","w");
+        ff=fopen("NC_017626.fna","r");
         ptts_num=ptt_readin(PTT_ECOLI,ptts);
     }
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
@@ -173,9 +197,17 @@ int main(int args,char *argv[]){
         strcpy(req_location,cJSON_GetObjectItem(request,"location")->valuestring);
         sscanf(req_location,"%d..%d",&req_gene_start,&req_gene_end);
     }
+    char req_rfc[10];
+    strcpy(req_rfc,cJSON_GetObjectItem(request,"rfc")->valuestring);
+    req_restrict.rfc10=req_rfc[0]-48;
+    req_restrict.rfc12=req_rfc[1]-48;
+    req_restrict.rfc12a=req_rfc[2]-48;
+    req_restrict.rfc21=req_rfc[3]-48;
+    req_restrict.rfc23=req_rfc[4]-48;
+    req_restrict.rfc25=req_rfc[5]-48;
     /*
     This part above is for read in JSON-style request.
-    The result stored in req_specie, req_pam, req_gene_start, req_gene_end and so on.
+    The result stored in req_specie, req_pam, req_gene_start, req_gene_end, rfc and so on.
     At the same time, it reads in ptt file for specie,
     and also open files.
     */
@@ -247,7 +279,7 @@ int main(int args,char *argv[]){
             if(j<psb_site[i].index+LEN) j=0;
             else j=1;
         }
-        if(j){
+        if(j && check_rfc(i)){
             in_site[ini]=psb_site[i];
             in_site[ini].ot.clear();
             score(ini);
@@ -261,7 +293,7 @@ int main(int args,char *argv[]){
     vector<cJSON*> list;
     list.clear();
 
-    for(i=0;i<ini;i++){
+    for(i=0;i<ini && i!=smallOutputNumber;i++){
         cJSON *ans=cJSON_CreateObject();
         char buffer[30];
         sprintf(buffer,"#%d",i+1);
@@ -272,7 +304,7 @@ int main(int args,char *argv[]){
         cJSON_AddNumberToObject(ans,"total_score",in_site[i].score);
         vector<cJSON*>sublist;
         sublist.clear();
-        for(j=0;j<in_site[i].count;j++){
+        for(j=0;j<in_site[i].count && j!=smallOutputNumber;j++){
             cJSON *subans=cJSON_CreateObject();
             int x=in_site[i].ot[j];
             sprintf(buffer,"%s%s",psb_site[x].nt,psb_site[x].pam);
@@ -298,6 +330,5 @@ int main(int args,char *argv[]){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
 
-    fprintf(fout4,"%s",cJSON_Print(root));
-    return 0;
+    return cJSON_Print(root);
 }

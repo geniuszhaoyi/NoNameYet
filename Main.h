@@ -13,6 +13,12 @@ using namespace std;
 #define PAM_LEN 20
 #define NUM_NO 7
 
+#ifdef EXPORT_HELLO_DLL
+#define HELLO_API __declspec(dllexport)
+#else
+#define HELLO_API __declspec(dllimport)
+#endif
+
 typedef struct ptt{
     int s,t;
     char strand;
@@ -30,6 +36,18 @@ typedef struct site{
     vector <int> ot;
 }site;
 
+typedef struct restrict{
+    char rfc10;
+    char rfc12,rfc12a;
+    char rfc21;
+    char rfc23;
+    char rfc25;
+}restrict;
+
 int ptt_readin(int, ptt*);
+
+extern "C"{
+    HELLO_API char *test(char *,int);
+}
 
 int readLine(FILE *);
