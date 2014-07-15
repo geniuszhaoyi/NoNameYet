@@ -11,7 +11,7 @@ using namespace std;
 
 #define LEN 20
 #define PAM_LEN 20
-#define NUM_NO 7
+#define NUM_NO 4
 
 #ifdef EXPORT_HELLO_DLL
 #define HELLO_API __declspec(dllexport)
@@ -51,3 +51,5 @@ extern "C"{
 }
 
 int readLine(FILE *);
+
+double score(int ii,int *pini);

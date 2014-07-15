@@ -1,4 +1,4 @@
-#include "Main.h"
+#include "main.h"
 
 int ptt_readin(int type,ptt *ptts){
     char buffer1[1000],buffer2[1000];

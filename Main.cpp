@@ -5,10 +5,10 @@ restrict req_restrict;
 
 ptt ptts[1000000];
 
-int pi=0;
+int pi;
 site psb_site[1000000];
 
-int ini=0;
+int ini;
 site in_site[1000000];
 
 char str[60000000];
@@ -34,6 +34,44 @@ void print_str(FILE *file,int s,int t){
     for(i=s;i<=t;i++){
         fprintf(file,"%c",str[i]);
     }
+}
+
+cJSON *Create_array_of_anything(cJSON **objects,int num)
+{
+	int i;cJSON *prev, *root=cJSON_CreateArray();
+	for (i=0;i<num;i++)
+	{
+		if (!i)	root->child=objects[i];
+		else	prev->next=objects[i], objects[i]->prev=prev;
+		prev=objects[i];
+	}
+	return root;
+}
+
+int check_pam(const char *str,const char *pam){
+    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
+    for(;*pam;pam++,str++){
+        if(*pam=='N' || *pam=='n') continue;
+        if(*str!=*pam) return 0;
+    }
+    return 1;
+}
+
+char dna_rev_char(char ch){
+    if(ch=='A' || ch=='a') return 'T';
+    if(ch=='T' || ch=='t') return 'A';
+    if(ch=='C' || ch=='c') return 'G';
+    if(ch=='G' || ch=='g') return 'C';
+    return 'N';
+}
+
+char *dna_rev(char *sr,const char *s,int len){
+    int i;
+    for(i=0;i<len;i++){
+        sr[i]=dna_rev_char(s[len-i-1]);
+    }
+    sr[i]=0;
+    return sr;
 }
 
 int check_rfc(int i){
@@ -130,45 +168,16 @@ double score(int ii,int *pini){
     return sum;
 }
 
-cJSON *Create_array_of_anything(cJSON **objects,int num)
-{
-	int i;cJSON *prev, *root=cJSON_CreateArray();
-	for (i=0;i<num;i++)
-	{
-		if (!i)	root->child=objects[i];
-		else	prev->next=objects[i], objects[i]->prev=prev;
-		prev=objects[i];
-	}
-	return root;
-}
-
-int check_pam(const char *str,const char *pam){
-    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
-    for(;*pam;pam++,str++){
-        if(*pam=='N' || *pam=='n') continue;
-        if(*str!=*pam) return 0;
-    }
-    return 1;
-}
-
-char dna_rev_char(char ch){
-    if(ch=='A' || ch=='a') return 'T';
-    if(ch=='T' || ch=='t') return 'A';
-    if(ch=='C' || ch=='c') return 'G';
-    if(ch=='G' || ch=='g') return 'C';
-    return 'N';
-}
-
-char *dna_rev(char *sr,const char *s,int len){
-    int i;
-    for(i=0;i<len;i++){
-        sr[i]=dna_rev_char(s[len-i-1]);
-    }
-    sr[i]=0;
-    return sr;
-}
-
 HELLO_API char *test(char *argv,int smallOutputNumber){
+    pi=0;
+    ini=0;
+    req_restrict.rfc10=0;
+    req_restrict.rfc12=0;
+    req_restrict.rfc12a=0;
+    req_restrict.rfc21=0;
+    req_restrict.rfc23=0;
+    req_restrict.rfc25=0;
+
     char ch;
 
     FILE *ff;
@@ -308,6 +317,7 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
         cJSON_AddStringToObject(ans,"grna",buffer);
         cJSON_AddNumberToObject(ans,"position",in_site[i].index);
         cJSON_AddNumberToObject(ans,"total_score",in_site[i].score);
+        cJSON_AddNumberToObject(ans,"count",in_site[i].count);
         vector<cJSON*>sublist;
         sublist.clear();
         for(j=0;j<in_site[i].count && j!=smallOutputNumber;j++){
