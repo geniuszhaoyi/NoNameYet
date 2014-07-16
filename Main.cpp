@@ -118,10 +118,40 @@ int check_rfc(int i){
     return 1;
 }
 
+double subscore(int ini,int j,int *Nph,int type){
+    int nmm=0;
+    int d0=0;
+    double smm=0;
+    int nph=0;
+    int i;
+    for(i=0;i<LEN;i++){
+        if(in_site[ini].nt[i]!=psb_site[j].nt[i]){
+            smm+=M[i];
+            d0+=19-i;
+            nmm++;
+        }
+    }
+    if(nmm==0){
+        nph++;
+        if(type==1) in_site[ini].ot.push_back(j);
+        smm=25.0;
+    }else{
+        if(nmm<=NUM_NO){
+            smm=10.0*smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
+            if(type==1) in_site[ini].ot.push_back(j);
+        }else{
+            smm=0.0;
+        }
+    }
+    if(type==0) (*Nph)=nmm;
+    if(type==1) (*Nph)+=nph;
+    return smm;
+}
+
 double score(int ii,int *pini){
     int ini=*pini;
     int Sgc=0,S20=0;
-    int Sph=25,Nph=0,S1=0;
+    int Nph=0;
     double sum=0;
     int gc=0;
     int i;
@@ -131,40 +161,24 @@ double score(int ii,int *pini){
     in_site[ini]=psb_site[ii];
     in_site[ini].ot.clear();
 
+    if(in_site[ini].index==2639)
+        i=100;
+
     for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
     if(in_site[ini].nt[19]!='G') S20=2;
 
     for(int j=0;j<pi;j++) if(in_site[ini].index!=psb_site[j].index){
-        int nmm=0;
-        int d0=0;
-        double smm=0;
-        for(i=0;i<LEN;i++){
-            if(in_site[ini].nt[i]!=psb_site[j].nt[i]){
-                smm+=M[i];
-                d0+=19-i;
-                nmm++;
-            }
-        }
-        if(nmm==0){
-            Nph++;
-        }
-        smm=smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
-        if(nmm<=NUM_NO){
-            in_site[ini].ot.push_back(j);
-        }else{
-            smm=0.0;
-        }
+        double smm=subscore(ini,j,&Nph,1);
         sum+=smm;
     }
-    S1=Nph*Sph;
-    if(Nph>0){
+    if(Nph>3){
         in_site[ini].score=0.0;
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
         return 0.0;
     }else{
-        sum=100-sum-Sgc-S20-S1;
+        sum=100-sum-Sgc-S20;
         in_site[ini].score=sum;
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
@@ -204,15 +218,17 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
     int len[NUM_CHROMOSOME];
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
     if(strcmp(req_specie,"SARS")==0){
-        rs=info_readin(PTT_SARS,ptts,str,wai);
+        rs=info_readin(PTT_SARS,ptts,str,wai,NULL);
     }else if(strcmp(req_specie,"E.coli")==0){
-        rs=info_readin(PTT_ECOLI,ptts,str,wai);
+        cJSON_temp=cJSON_GetObjectItem(request,"kind");
+        if(cJSON_temp) rs=info_readin(PTT_ECOLI,ptts,str,wai,cJSON_temp->valuestring);
+        else rs=info_readin(PTT_ECOLI,ptts,str,wai,NULL);
     }else if(strcmp(req_specie,"Saccharomycetes")==0){
-        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str,wai);
+        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str,wai,NULL);
     }
     ptts_num=rs.ptts_num;
     int num_chromosome=rs.num_chromosome;
-    for(i=0;i<num_chromosome;i++) len[i]=rs.len[i];
+    for(i=1;i<=num_chromosome;i++) len[i]=rs.len[i];
 
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
     int req_id,req_gene_start,req_gene_end;
@@ -252,7 +268,7 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
     printf("(start,end): (%d,%d)\n",req_gene_start,req_gene_end);
     printf("pam: %s\n",req_pam);
 
-    for(int id=0;id<num_chromosome;id++){
+    for(int id=1;id<=num_chromosome;id++){
         for(i=LEN;i<len[id]-req_pam_len;i++){       // All possible gRNAs, +direction
             if(check_pam(str[id]+i,req_pam)){
                 psb_site[pi].index=i;
@@ -330,12 +346,8 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
             int x=in_site[i].ot[j];
             sprintf(buffer,"%s%s",psb_site[x].nt,psb_site[x].pam);
             cJSON_AddStringToObject(subans,"osequence",buffer);
-            double score=0;
-            int omms=LEN;
-            for(int si=0;si<LEN;si++) if(in_site[i].nt[si]==psb_site[x].nt[si]){
-                score+=M[si];
-                omms--;
-            }
+            int omms;
+            double score=subscore(i,x,&omms,0);
             cJSON_AddNumberToObject(subans,"oscore",score);
             cJSON_AddNumberToObject(subans,"omms",omms);
             cJSON_AddNumberToObject(subans,"ostrand",psb_site[x].strand);

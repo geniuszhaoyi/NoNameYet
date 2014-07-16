@@ -55,7 +55,7 @@ struct return_struct{
     int num_chromosome;
 };
 
-struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN]);
+struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN],const char*);
 
 extern "C"{
     HELLO_API char *test(char *,int);

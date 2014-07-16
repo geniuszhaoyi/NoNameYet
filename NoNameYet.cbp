@@ -46,7 +46,6 @@
 		<Unit filename="cJSON/cJSON.h" />
 		<Unit filename="main.h" />
 		<Unit filename="ptt_readin.cpp" />
-		<Unit filename="score.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
