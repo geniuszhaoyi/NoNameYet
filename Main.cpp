@@ -42,7 +42,6 @@ cJSON *Create_array_of_anything(cJSON **objects,int num)
 }
 
 int check_pam(const char *str,const char *pam){
-    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
     for(;*pam;pam++,str++){
         if(*pam=='N' || *pam=='n') continue;
         if(*str!=*pam) return 0;
@@ -203,7 +202,7 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
     }
 
     i=1;        //序列的开始
-    j=1;    //编号的开num_chromosome始
+    j=1;        //编号的开num_chromosome始
 
     cJSON *request=cJSON_Parse(argv);
     cJSON *cJSON_temp;
