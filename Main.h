@@ -16,12 +16,6 @@ using namespace std;
 #define NUM_CHROMOSOME 30
 #define GENE_LEN 8000000
 
-#ifdef EXPORT_HELLO_DLL
-#define HELLO_API __declspec(dllexport)
-#else
-#define HELLO_API __declspec(dllimport)
-#endif
-
 typedef struct ptt{
     int s,t;
     int chromosome;
@@ -69,10 +63,6 @@ extern char str[NUM_CHROMOSOME][GENE_LEN];
 extern char wai[NUM_CHROMOSOME][GENE_LEN];
 
 struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN],const char*);
-
-extern "C"{
-    HELLO_API char *test(char *,int);
-}
 
 int readLine(FILE *);
 

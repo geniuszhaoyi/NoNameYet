@@ -1,4 +1,3 @@
-#define EXPORT_HELLO_DLL
 #include "Main.h"
 
 restrict req_restrict;
@@ -40,7 +39,6 @@ cJSON *Create_array_of_anything(cJSON **objects,int num)
 }
 
 int check_pam(const char *str,const char *pam){
-    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
     for(;*pam;pam++,str++){
         if(*pam=='N' || *pam=='n') continue;
         if(*str!=*pam) return 0;
@@ -65,6 +63,15 @@ char *dna_rev(char *sr,const char *s,int len){
     return sr;
 }
 
+char *NomoreSpace(char *str){
+    int i,j;
+    for(i=0,j=0;str[i];i++) if(str[i]!=' ' && str[i]!='\n' && str[i]!='\t') str[j++]=str[i];
+    str[j]=0;
+    return str;
+}
+
+char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}";
+
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
     int i,j;
@@ -82,10 +89,13 @@ int main(int args,char *argv[]){
         str[i][j]=0;
     }
 
+    char *req_str=argv_default;
+    if(args==2) req_str=argv[1];
+
     i=1;
     j=1;
 
-    cJSON *request=cJSON_Parse(argv[1]);
+    cJSON *request=cJSON_Parse(req_str);
     cJSON *cJSON_temp;
     char req_pam[PAM_LEN+1];
     int req_pam_len;
@@ -144,10 +154,6 @@ int main(int args,char *argv[]){
     and also open files.
     */
 
-    printf("specie: %s\n",req_specie);
-    printf("(start,end): (%d,%d)\n",req_gene_start,req_gene_end);
-    printf("pam: %s\n",req_pam);
-
     for(int id=1;id<=num_chromosome;id++){
         for(i=LEN;i<len[id]-req_pam_len;i++){       // All possible gRNAs, +direction
             if(check_pam(str[id]+i,req_pam)){
@@ -156,10 +162,8 @@ int main(int args,char *argv[]){
                 psb_site[pi].chromosome=id;
                 for(j=0;j<req_pam_len;j++) psb_site[pi].pam[j]=(str[id]+i)[j];
                 psb_site[pi].pam[j]=0;
-                //strncpy(psb_site[pi].pam,str[id]+i,req_pam_len);
                 for(j=0;j<LEN;j++) psb_site[pi].nt[j]=(str[id]+i-LEN)[j];
                 psb_site[pi].nt[j]=0;
-                //strncpy(psb_site[pi].nt,str[id]+i-LEN,LEN);
                 pi++;
             }
         }
@@ -172,7 +176,6 @@ int main(int args,char *argv[]){
                 psb_site[pi].strand='-';
                 psb_site[pi].chromosome=id;
                 if(req_pam_len!=last){
-                    printf(">>%d<<\n",req_pam_len);
                     last=req_pam_len;
                 }
                 for(j=0;j<req_pam_len;j++) psb_site[pi].pam[j]=dna_rev_char((str[id]+i)[req_pam_len-1-j]);
@@ -184,11 +187,7 @@ int main(int args,char *argv[]){
         }
     }
 
-    printf("Number of possible gRNA: %d\n",pi);
-
-    for(i=0;i<pi;i++) if(i%20000==0) printf("."); printf("\n");
-    for(i=0;i<pi;i++){             //ÕÒµ½ gRNAs ²¢ÆÀ·Ö
-        if(i%20000==0) printf(".");
+    for(i=0;i<pi;i++){
         fflush(stdout);
         if(psb_site[i].chromosome!=req_id) continue;
         if(psb_site[i].strand=='+'){
@@ -256,19 +255,9 @@ int main(int args,char *argv[]){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
 
-    printf("%s\n",cJSON_Print(root));
+    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
+
+    free(argv[0]);
 
     return 0;
 }
-
-/*
-int main(void){
-    FILE *file=fopen("D:/c/dll_test/ans1.txt","w");
-    fprintf(file,"%s",test("{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}",-1));
-    file=fopen("D:/c/dll_test/ans2.txt","w");
-    fprintf(file,"%s",test("{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NNAGAA\",\"rfc\":\"100101\"}",-1));
-    file=fopen("D:/c/dll_test/ans3.txt","w");
-    fprintf(file,"%s",test("{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}",-1));
-
-}
-*/
