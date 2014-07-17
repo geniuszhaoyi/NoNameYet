@@ -14,8 +14,6 @@ site in_site[1000000];
 char str[NUM_CHROMOSOME][GENE_LEN];
 char wai[NUM_CHROMOSOME][GENE_LEN];
 
-const double M[]={0,0,0.014,0,0,0.395,0.317,0,0.389,0.079,0.445,0.508,0.613,0.851,0.732,0.828,0.615,0.804,0.685,0.583};
-
 bool cmp_in_site(site a,site b){
     return a.score>b.score;
 }
@@ -42,6 +40,7 @@ cJSON *Create_array_of_anything(cJSON **objects,int num)
 }
 
 int check_pam(const char *str,const char *pam){
+    // (str[i]=='A' || str[i]=='T' || str[i]=='C' || str[i]=='G') && str[i+1]=='G' && str[i+2]=='G'
     for(;*pam;pam++,str++){
         if(*pam=='N' || *pam=='n') continue;
         if(*str!=*pam) return 0;
@@ -66,126 +65,8 @@ char *dna_rev(char *sr,const char *s,int len){
     return sr;
 }
 
-int check_rfc(int i){
-    char str[LEN+PAM_LEN+3];
-    strcpy(str,psb_site[i].nt);
-    strcat(str,psb_site[i].pam);
-    if(req_restrict.rfc10){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    if(req_restrict.rfc12){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"GCTAGC")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    if(req_restrict.rfc12a){
-        if(strstr(str,"CAGCTG")) return 0;
-        if(strstr(str,"CTCGAG")) return 0;
-        if(strstr(str,"CCTAGG")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"GCTCTTC")) return 0;
-        if(strstr(str,"GAAGAGC")) return 0;
-    }
-    if(req_restrict.rfc21){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"AGATCT")) return 0;
-        if(strstr(str,"GGATCC")) return 0;
-        if(strstr(str,"CTCGAG")) return 0;
-    }
-    if(req_restrict.rfc23){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    if(req_restrict.rfc25){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"GCCGGC")) return 0;
-        if(strstr(str,"ACCGGT")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    return 1;
-}
-
-double subscore(int ini,int j,int *Nph,int type){
-    int nmm=0;
-    int d0=0;
-    double smm=0;
-    int nph=0;
-    int i;
-    for(i=0;i<LEN;i++){
-        if(in_site[ini].nt[i]!=psb_site[j].nt[i]){
-            smm+=M[i];
-            d0+=19-i;
-            nmm++;
-        }
-    }
-    if(nmm==0){
-        nph++;
-        if(type==1) in_site[ini].ot.push_back(j);
-        smm=25.0;
-    }else{
-        if(nmm<=NUM_NO){
-            smm=10.0*smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
-            if(type==1) in_site[ini].ot.push_back(j);
-        }else{
-            smm=0.0;
-        }
-    }
-    if(type==0) (*Nph)=nmm;
-    if(type==1) (*Nph)+=nph;
-    return smm;
-}
-
-double score(int ii,int *pini){
-    int ini=*pini;
-    int Sgc=0,S20=0;
-    int Nph=0;
-    double sum=0;
-    int gc=0;
-    int i;
-
-    if(check_rfc(ini)==0) return -1.0;
-
-    in_site[ini]=psb_site[ii];
-    in_site[ini].ot.clear();
-
-    if(in_site[ini].index==2639)
-        i=100;
-
-    for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
-    if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
-    if(in_site[ini].nt[19]!='G') S20=2;
-
-    for(int j=0;j<pi;j++) if(in_site[ini].index!=psb_site[j].index){
-        double smm=subscore(ini,j,&Nph,1);
-        sum+=smm;
-    }
-    if(Nph>3){
-        in_site[ini].score=0.0;
-        in_site[ini].count=in_site[ini].ot.size();
-        (*pini)++;
-        return 0.0;
-    }else{
-        sum=100-sum-Sgc-S20;
-        in_site[ini].score=sum;
-        in_site[ini].count=in_site[ini].ot.size();
-        (*pini)++;
-        return sum;
-    }
-}
-
-HELLO_API char *test(char *argv,int smallOutputNumber){
+int main(int args,char *argv[]){
+    const int smallOutputNumber=-1;
     int i,j;
 
     pi=0;
@@ -201,10 +82,10 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
         str[i][j]=0;
     }
 
-    i=1;        //序列的开始
-    j=1;        //编号的开num_chromosome始
+    i=1;
+    j=1;
 
-    cJSON *request=cJSON_Parse(argv);
+    cJSON *request=cJSON_Parse(argv[1]);
     cJSON *cJSON_temp;
     char req_pam[PAM_LEN+1];
     int req_pam_len;
@@ -273,18 +154,27 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
                 psb_site[pi].index=i;
                 psb_site[pi].strand='+';
                 psb_site[pi].chromosome=id;
-                strncpy(psb_site[pi].pam,str[id]+i,req_pam_len);
-                strncpy(psb_site[pi].nt,str[id]+i-LEN,LEN);
+                for(j=0;j<req_pam_len;j++) psb_site[pi].pam[j]=(str[id]+i)[j];
+                psb_site[pi].pam[j]=0;
+                //strncpy(psb_site[pi].pam,str[id]+i,req_pam_len);
+                for(j=0;j<LEN;j++) psb_site[pi].nt[j]=(str[id]+i-LEN)[j];
+                psb_site[pi].nt[j]=0;
+                //strncpy(psb_site[pi].nt,str[id]+i-LEN,LEN);
                 pi++;
             }
         }
         char req_pam_rev[PAM_LEN];
+        int last=-1;
         dna_rev(req_pam_rev,req_pam,req_pam_len);
         for(i=0;i<len[id]-LEN-req_pam_len;i++){     // All possible gRNAs, -direction
             if(check_pam(str[id]+i,req_pam_rev)){
                 psb_site[pi].index=i+req_pam_len-1;
                 psb_site[pi].strand='-';
                 psb_site[pi].chromosome=id;
+                if(req_pam_len!=last){
+                    printf(">>%d<<\n",req_pam_len);
+                    last=req_pam_len;
+                }
                 for(j=0;j<req_pam_len;j++) psb_site[pi].pam[j]=dna_rev_char((str[id]+i)[req_pam_len-1-j]);
                 psb_site[pi].pam[j]=0;
                 for(j=0;j<LEN;j++) psb_site[pi].nt[j]=dna_rev_char((str[id]+i+req_pam_len)[LEN-j-1]);
@@ -349,7 +239,10 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
             double score=subscore(i,x,&omms,0);
             cJSON_AddNumberToObject(subans,"oscore",score);
             cJSON_AddNumberToObject(subans,"omms",omms);
-            cJSON_AddNumberToObject(subans,"ostrand",psb_site[x].strand);
+            char xs[2];
+            xs[0]=psb_site[x].strand;
+            xs[1]=0;
+            cJSON_AddStringToObject(subans,"ostrand",xs);
             sprintf(buffer,"%d:%d",psb_site[x].chromosome,psb_site[x].index);
             cJSON_AddStringToObject(subans,"oposition",buffer);
             if(psb_site[x].region) strcpy(buffer,"Intergenic");
@@ -363,5 +256,19 @@ HELLO_API char *test(char *argv,int smallOutputNumber){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
 
-    return cJSON_Print(root);
+    printf("%s\n",cJSON_Print(root));
+
+    return 0;
 }
+
+/*
+int main(void){
+    FILE *file=fopen("D:/c/dll_test/ans1.txt","w");
+    fprintf(file,"%s",test("{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}",-1));
+    file=fopen("D:/c/dll_test/ans2.txt","w");
+    fprintf(file,"%s",test("{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NNAGAA\",\"rfc\":\"100101\"}",-1));
+    file=fopen("D:/c/dll_test/ans3.txt","w");
+    fprintf(file,"%s",test("{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}",-1));
+
+}
+*/

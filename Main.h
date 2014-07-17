@@ -55,6 +55,19 @@ struct return_struct{
     int num_chromosome;
 };
 
+extern restrict req_restrict;
+
+extern ptt ptts[1000000];
+
+extern int pi;
+extern site psb_site[1000000];
+
+extern int ini;
+extern site in_site[1000000];
+
+extern char str[NUM_CHROMOSOME][GENE_LEN];
+extern char wai[NUM_CHROMOSOME][GENE_LEN];
+
 struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN],const char*);
 
 extern "C"{
@@ -63,4 +76,5 @@ extern "C"{
 
 int readLine(FILE *);
 
-double score(int ii,int *pini);
+double subscore(int,int,int*,int);
+double score(int,int*);

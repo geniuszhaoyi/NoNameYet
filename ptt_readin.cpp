@@ -49,6 +49,22 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN],char wa
 
             if(id_max<id) id_max=id;
         }
+
+/*
+        int s,t;
+        char buffer1[1000],buffer2[1000];
+        FILE *fp=fopen("SARS.ptt","r");
+        readLine(fp);
+        while(fscanf(fp,"%s%s%d%d",buffer1,buffer2,&s,&t)==4){
+            fscanf(fp,"%s%s",buffer1,buffer2);
+            readLine(fp);
+            ptts[ptti].s=s;
+            ptts[ptti].t=t;
+            ptts[ptti].chromosome=1;
+            strcpy(ptts[ptti].gene,buffer2);
+            ptti++;
+        }*/
+
         rs.ptts_num=ptti;
         rs.num_chromosome=id_max;
         return rs;
@@ -105,6 +121,25 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN],char wa
 
             if(id_max<id) id_max=id;
         }
+        /*
+        int s,t;
+        char strand;
+        char buffer[1000];
+        int len,pid;
+        FILE *fp=fopen("NC_017626.ptt","r");
+        readLine(fp);
+        readLine(fp);
+        readLine(fp);
+        while(fscanf(fp,"%d..%d\t%c\t%d\t%d\t%s",&s,&t,&strand,&len,&pid,buffer)==6){
+            readLine(fp);
+            ptts[ptti].s=s;
+            ptts[ptti].t=t;
+            ptts[ptti].chromosome=1;
+            ptts[ptti].strand=strand;
+            strcpy(ptts[ptti].gene,buffer);
+            ptti++;
+        }*/
+
         rs.ptts_num=ptti;
         rs.num_chromosome=id_max;
         return rs;
