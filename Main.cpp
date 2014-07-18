@@ -70,7 +70,7 @@ char *NomoreSpace(char *str){
     return str;
 }
 
-char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}";
+char argv_default[]="{\"specie\":\"Saccharomycetes\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}";
 
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
@@ -225,7 +225,7 @@ int main(int args,char *argv[]){
         cJSON_AddStringToObject(ans,"grna",buffer);
         sprintf(buffer,"%d:%d",in_site[i].chromosome,in_site[i].index);
         cJSON_AddStringToObject(ans,"position",buffer);
-        cJSON_AddNumberToObject(ans,"total_score",in_site[i].score);
+        cJSON_AddNumberToObject(ans,"total_score",(int)in_site[i].score);
         cJSON_AddNumberToObject(ans,"count",in_site[i].count);
         vector<cJSON*>sublist;
         sublist.clear();
@@ -255,7 +255,8 @@ int main(int args,char *argv[]){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
 
-    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
+   // FILE *fout=fopen("D:/ans.txt","w");
+    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root))); //
 
     free(argv[0]);
 

@@ -33,6 +33,15 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="Main.cpp" />
+		<Unit filename="cJSON/LICENSE" />
+		<Unit filename="cJSON/README" />
+		<Unit filename="cJSON/cJSON.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="cJSON/cJSON.h" />
+		<Unit filename="main.h" />
+		<Unit filename="ptt_readin.cpp" />
+		<Unit filename="score.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

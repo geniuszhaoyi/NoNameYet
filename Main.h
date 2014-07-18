@@ -31,7 +31,7 @@ typedef struct site{
     int chromosome;
     char region;
     char strand;
-    double score;
+    int score;
     vector <int> ot;
 }site;
 
