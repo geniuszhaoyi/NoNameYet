@@ -44,6 +44,8 @@ local.properties
 
 # Build results
 
+*.exe
+
 [Dd]ebug/
 [Rr]elease/
 x64/
@@ -60,6 +62,7 @@ build/
 *.ilk
 *.meta
 *.obj
+*.o
 *.pch
 *.pdb
 *.pgc
@@ -78,6 +81,9 @@ build/
 *.pidb
 *.log
 *.scc
+
+#Codeblocks files
+*.layout
 
 # Visual C++ cache files
 ipch/

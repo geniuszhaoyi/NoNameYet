@@ -72,7 +72,7 @@ double subscore(int ini,int j,int *Nph,int type){
         smm=25.0;
     }else{
         if(nmm<=NUM_NO){
-            smm=10.0*smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
+            smm=20.0*smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
             if(type==1) in_site[ini].ot.push_back(j);
         }else{
             smm=0.0;
