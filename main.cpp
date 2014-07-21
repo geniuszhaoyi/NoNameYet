@@ -92,12 +92,16 @@ int check_req(cJSON *request){
 }
 
 int main(int args,char *argv[]){
-    const int smallOutputNumber=10;
+    const int smallOutputNumber=-1;
     int i,j;
     vector<cJSON*> list;
     cJSON *root;
     int num_chromosome;
     int req_type=1;
+    char buffer[30];
+    char req_gene[20]={0};
+    cJSON *msg;
+    char req_kind[30]="E.coli K12-DH10B";
 
     pi=0;
     ini=0;
@@ -137,8 +141,8 @@ int main(int args,char *argv[]){
         rs=info_readin(PTT_SARS,ptts,str,wai,NULL);
     }else if(strcmp(req_specie,"E.coli")==0){
         cJSON_temp=cJSON_GetObjectItem(request,"kind");
-        if(cJSON_temp) rs=info_readin(PTT_ECOLI,ptts,str,wai,cJSON_temp->valuestring);
-        else rs=info_readin(PTT_ECOLI,ptts,str,wai,NULL);
+        if(cJSON_temp) strcpy(req_kind,cJSON_temp->valuestring);
+        rs=info_readin(PTT_ECOLI,ptts,str,wai,req_kind);
     }else if(strcmp(req_specie,"Saccharomycetes")==0){
         rs=info_readin(PTT_SACCHAROMYCETES,ptts,str,wai,NULL);
     }else{
@@ -153,7 +157,6 @@ int main(int args,char *argv[]){
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
     int req_id,req_gene_start,req_gene_end;
     if(cJSON_temp){
-        char req_gene[20];
         strcpy(req_gene,cJSON_temp->valuestring);
         for(int i=0;i<ptts_num;i++){
             if(strcmp(req_gene,ptts[i].gene)==0){
@@ -244,11 +247,19 @@ int main(int args,char *argv[]){
 
     root=cJSON_CreateObject();
     cJSON_AddNumberToObject(root,"status",0);
+
+    msg=cJSON_CreateObject();
+    cJSON_AddStringToObject(msg,"specie",req_specie);
+    cJSON_AddStringToObject(msg,"kind",req_kind);
+    cJSON_AddStringToObject(msg,"gene",req_gene);
+    sprintf(buffer,"%d:%d..%d",req_id,req_gene_start,req_gene_end);
+    cJSON_AddStringToObject(msg,"location",buffer);
+    cJSON_AddItemToObject(root,"message",msg);
+
     list.clear();
 
     for(i=0;i<ini && i!=smallOutputNumber;i++){
         cJSON *ans=cJSON_CreateObject();
-        char buffer[30];
         sprintf(buffer,"#%d",i+1);
         cJSON_AddStringToObject(ans,"key",buffer);
         sprintf(buffer,"%s%s",in_site[i].nt,in_site[i].pam);
@@ -287,8 +298,8 @@ int main(int args,char *argv[]){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
 
-   // FILE *fout=fopen("D:/ans.txt","w");
-    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root))); //
+    fprintf(fopen("d:/out2.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root))); //
+//    printf(NomoreSpace(argv[0]=cJSON_Print(root))); //
 
     free(argv[0]);
     return 0;

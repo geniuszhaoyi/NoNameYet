@@ -58,8 +58,7 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN],char wa
     if(type==PTT_ECOLI){
         char path[196];
         char Path[196]="Database/E.coli/";
-        if(ctrl) strcat(Path,ctrl);
-        else strcat(Path,"E.coli K12-DH10B");
+        strcat(Path,ctrl);
         strcat(Path,"/");
         sprintf(path,"%slist.txt",Path);
         FILE *flist=fopen(path,"r");
