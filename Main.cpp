@@ -65,16 +65,23 @@ char *dna_rev(char *sr,const char *s,int len){
 
 char *NomoreSpace(char *str){
     int i,j;
-    for(i=0,j=0;str[i];i++) if(str[i]!=' ' && str[i]!='\n' && str[i]!='\t') str[j++]=str[i];
+    int mark=0;
+    for(i=0,j=0;str[i];i++){
+        if(str[i]=='\"') mark=1-mark;
+        if(mark || (str[i]!=' ' && str[i]!='\n' && str[i]!='\t')) str[j++]=str[i];
+    }
     str[j]=0;
     return str;
 }
 
-char argv_default[]="{\"specie\":\"Saccharomycetes\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}";
+char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}";
 
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
     int i,j;
+    vector<cJSON*> list;
+    cJSON *root;
+    int num_chromosome;
 
     pi=0;
     ini=0;
@@ -92,10 +99,21 @@ int main(int args,char *argv[]){
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
 
+    cJSON *request=cJSON_Parse(req_str);
+    int clt=3;
+    char cl[][10]={"pam","specie","rfc"};
+    for(i=0;i<clt;i++){
+        if(cJSON_GetObjectItem(request,cl[i])==NULL) break;
+    }
+    if(i<clt){
+        char msg[]="no args";
+        argv[0]=msg;
+        goto Error;
+    }
+
     i=1;
     j=1;
 
-    cJSON *request=cJSON_Parse(req_str);
     cJSON *cJSON_temp;
     char req_pam[PAM_LEN+1];
     int req_pam_len;
@@ -115,9 +133,13 @@ int main(int args,char *argv[]){
         else rs=info_readin(PTT_ECOLI,ptts,str,wai,NULL);
     }else if(strcmp(req_specie,"Saccharomycetes")==0){
         rs=info_readin(PTT_SACCHAROMYCETES,ptts,str,wai,NULL);
+    }else{
+        char msg[]="no specie";
+        argv[0]=msg;
+        goto Error;
     }
     ptts_num=rs.ptts_num;
-    int num_chromosome=rs.num_chromosome;
+    num_chromosome=rs.num_chromosome;
     for(i=1;i<=num_chromosome;i++) len[i]=rs.len[i];
 
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
@@ -212,8 +234,8 @@ int main(int args,char *argv[]){
 
     sort(in_site,in_site+ini,cmp_in_site);  // Sort & Output
 
-    cJSON *root=cJSON_CreateObject();
-    vector<cJSON*> list;
+    root=cJSON_CreateObject();
+    cJSON_AddNumberToObject(root,"status",0);
     list.clear();
 
     for(i=0;i<ini && i!=smallOutputNumber;i++){
@@ -259,6 +281,14 @@ int main(int args,char *argv[]){
     printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root))); //
 
     free(argv[0]);
+    return 0;
+
+Error:
+    cJSON *root_error=cJSON_CreateObject();
+    cJSON_AddNumberToObject(root_error,"status",1);
+    cJSON_AddStringToObject(root_error,"message",argv[0]);
+
+    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root_error))); //
 
     return 0;
 }
