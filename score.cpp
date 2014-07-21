@@ -83,21 +83,23 @@ double subscore(int ini,int j,int *Nph,int type){
     return smm;
 }
 
-double score(int ii,int *pini){
+return_struct score(int ii,int *pini,int type){
     int ini=*pini;
     int Sgc=0,S20=0;
     int Nph=0;
     double sum=0;
     int gc=0;
     int i;
+    return_struct rs;
 
-    if(check_rfc(ini)==0) return -1.0;
+    if(check_rfc(ini)==0){
+        rs.dou[0]=-1.0;
+        rs.dou[1]=0.0;
+        rs.dou[2]=0.0;
+    }
 
     in_site[ini]=psb_site[ii];
     in_site[ini].ot.clear();
-
-    if(in_site[ini].index==2639)
-        i=100;
 
     for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
@@ -107,16 +109,31 @@ double score(int ii,int *pini){
         double smm=subscore(ini,j,&Nph,1);
         sum+=smm;
     }
-    if(Nph>3){
+    rs.dou[1]=93.0-sum;
+    rs.dou[2]=7.0-Sgc-S20;
+    if(type==1 && Nph>3){
         in_site[ini].score=0.0;
+        in_site[ini].Sspe=rs.dou[1];
+        in_site[ini].Seff=rs.dou[2];
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
-        return 0.0;
-    }else{
+        rs.dou[0]=0.0;
+    }else if(type==1){
         sum=100-sum-Sgc-S20;
         in_site[ini].score=sum;
+        in_site[ini].Sspe=rs.dou[1];
+        in_site[ini].Seff=rs.dou[2];
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
-        return sum;
+        rs.dou[0]=sum;
+    }else{
+        sum=sum-Sgc-S20+7;
+        in_site[ini].score=sum;
+        in_site[ini].Sspe=rs.dou[1];
+        in_site[ini].Seff=rs.dou[2];
+        in_site[ini].count=in_site[ini].ot.size();
+        (*pini)++;
+        rs.dou[0]=sum;
     }
+    return rs;
 }

@@ -31,7 +31,7 @@ typedef struct site{
     int chromosome;
     char region;
     char strand;
-    int score;
+    double score,Sspe,Seff;
     vector <int> ot;
 }site;
 
@@ -47,6 +47,7 @@ struct return_struct{
     int ptts_num;
     int len[NUM_CHROMOSOME];
     int num_chromosome;
+    double dou[3];
 };
 
 extern restrict req_restrict;
@@ -67,4 +68,4 @@ struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN],cons
 int readLine(FILE *);
 
 double subscore(int,int,int*,int);
-double score(int,int*);
+return_struct score(int,int*,int);

@@ -1,5 +1,6 @@
 #include "main.h"
 
+//req_GobalParameter
 restrict req_restrict;
 
 ptt ptts[1000000];
@@ -10,8 +11,8 @@ site psb_site[1000000];
 int ini;
 site in_site[1000000];
 
-char str[NUM_CHROMOSOME][GENE_LEN];
-char wai[NUM_CHROMOSOME][GENE_LEN];
+char str[NUM_CHROMOSOME][GENE_LEN]={0};
+char wai[NUM_CHROMOSOME][GENE_LEN]={0};
 
 bool cmp_in_site(site a,site b){
     return a.score>b.score;
@@ -74,14 +75,29 @@ char *NomoreSpace(char *str){
     return str;
 }
 
-char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100101\"}";
+char *_NomoreSpace(char *str){
+    return str;
+}
+
+char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+
+int check_req(cJSON *request){
+    int clt=3;
+    int i;
+    char cl[][10]={"pam","specie","rfc"};
+    for(i=0;i<clt;i++){
+        if(cJSON_GetObjectItem(request,cl[i])==NULL) break;
+    }
+    return i<clt;
+}
 
 int main(int args,char *argv[]){
-    const int smallOutputNumber=-1;
+    const int smallOutputNumber=10;
     int i,j;
     vector<cJSON*> list;
     cJSON *root;
     int num_chromosome;
+    int req_type=1;
 
     pi=0;
     ini=0;
@@ -91,22 +107,13 @@ int main(int args,char *argv[]){
     req_restrict.rfc21=0;
     req_restrict.rfc23=0;
     req_restrict.rfc25=0;
-    for(i=0;i<NUM_CHROMOSOME;i++) for(j=0;j<GENE_LEN;j++){
-        wai[i][j]=0;
-        str[i][j]=0;
-    }
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
 
     cJSON *request=cJSON_Parse(req_str);
-    int clt=3;
-    char cl[][10]={"pam","specie","rfc"};
-    for(i=0;i<clt;i++){
-        if(cJSON_GetObjectItem(request,cl[i])==NULL) break;
-    }
-    if(i<clt){
-        char msg[]="no args";
+    if(check_req(request)){
+        char msg[]="illegal args";
         argv[0]=msg;
         goto Error;
     }
@@ -115,12 +122,13 @@ int main(int args,char *argv[]){
     j=1;
 
     cJSON *cJSON_temp;
+    cJSON_temp=cJSON_GetObjectItem(request,"type");
+    if(cJSON_temp) req_type=cJSON_temp->valueint;
     char req_pam[PAM_LEN+1];
     int req_pam_len;
     strcpy(req_pam,cJSON_GetObjectItem(request,"pam")->valuestring);
     req_pam_len=(int)strlen(req_pam);
     char req_specie[50];
-
     struct return_struct rs;
     int ptts_num;
     int len[NUM_CHROMOSOME];
@@ -228,7 +236,7 @@ int main(int args,char *argv[]){
             else j=1;
         }
         if(j){
-            score(i,&ini);
+            score(i,&ini,req_type);
         }
     }
 
@@ -248,6 +256,8 @@ int main(int args,char *argv[]){
         sprintf(buffer,"%d:%d",in_site[i].chromosome,in_site[i].index);
         cJSON_AddStringToObject(ans,"position",buffer);
         cJSON_AddNumberToObject(ans,"total_score",(int)in_site[i].score);
+        cJSON_AddNumberToObject(ans,"Sspe",(int)in_site[i].Sspe);
+        cJSON_AddNumberToObject(ans,"Seff",(int)in_site[i].Seff);
         cJSON_AddNumberToObject(ans,"count",in_site[i].count);
         vector<cJSON*>sublist;
         sublist.clear();
