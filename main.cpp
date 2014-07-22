@@ -278,8 +278,8 @@ int main(int args,char *argv[]){
             sprintf(buffer,"%s%s",psb_site[x].nt,psb_site[x].pam);
             cJSON_AddStringToObject(subans,"osequence",buffer);
             int omms;
-            double score=subscore(i,x,&omms,0);
-            cJSON_AddNumberToObject(subans,"oscore",score);
+            sprintf(buffer,"%.2f",subscore(i,x,&omms,0));
+            cJSON_AddStringToObject(subans,"oscore",buffer);
             cJSON_AddNumberToObject(subans,"omms",omms);
             char xs[2];
             xs[0]=psb_site[x].strand;
