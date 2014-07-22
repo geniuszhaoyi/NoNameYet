@@ -11,8 +11,8 @@ site psb_site[1000000];
 int ini;
 site in_site[1000000];
 
-char str[NUM_CHROMOSOME][GENE_LEN]={0};
-char wai[NUM_CHROMOSOME][GENE_LEN]={0};
+char str[NUM_CHROMOSOME][GENE_LEN];
+char wai[NUM_CHROMOSOME][GENE_LEN];
 
 bool cmp_in_site(site a,site b){
     return a.score>b.score;
@@ -91,17 +91,27 @@ int check_req(cJSON *request){
     return i<clt;
 }
 
+void onError(const char *msg){
+    char *p;
+
+    cJSON *root_error=cJSON_CreateObject();
+    cJSON_AddNumberToObject(root_error,"status",1);
+    cJSON_AddStringToObject(root_error,"message",msg);
+
+    printf("%s\n",NomoreSpace(p=cJSON_Print(root_error)));
+    free(p);
+}
+
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
     int i,j;
-    vector<cJSON*> list;
     cJSON *root;
     int num_chromosome;
     int req_type=1;
     char buffer[30];
     char req_gene[20]={0};
     cJSON *msg;
-    char req_kind[30]="E.coli K12-DH10B";
+    char req_kind[50]="E.coli K12-DH10B";
 
     pi=0;
     ini=0;
@@ -117,9 +127,8 @@ int main(int args,char *argv[]){
 
     cJSON *request=cJSON_Parse(req_str);
     if(check_req(request)){
-        char msg[]="illegal args";
-        argv[0]=msg;
-        goto Error;
+        onError("illegal args");
+        return 0;
     }
 
     i=1;
@@ -132,7 +141,7 @@ int main(int args,char *argv[]){
     int req_pam_len;
     strcpy(req_pam,cJSON_GetObjectItem(request,"pam")->valuestring);
     req_pam_len=(int)strlen(req_pam);
-    char req_specie[50];
+    char req_specie[30];
     struct return_struct rs;
     int ptts_num;
     int len[NUM_CHROMOSOME];
@@ -146,9 +155,8 @@ int main(int args,char *argv[]){
     }else if(strcmp(req_specie,"Saccharomycetes")==0){
         rs=info_readin(PTT_SACCHAROMYCETES,ptts,str,wai,NULL);
     }else{
-        char msg[]="no specie";
-        argv[0]=msg;
-        goto Error;
+        onError("no specie");
+        return 0;
     }
     ptts_num=rs.ptts_num;
     num_chromosome=rs.num_chromosome;
@@ -180,6 +188,9 @@ int main(int args,char *argv[]){
     req_restrict.rfc21=req_rfc[3]-48;
     req_restrict.rfc23=req_rfc[4]-48;
     req_restrict.rfc25=req_rfc[5]-48;
+
+    generate_filename(buffer,req_specie,req_kind,req_pam,req_type);
+    dc_init(buffer);
     /*
     This part above is for read in JSON-style request.
     The result stored in req_specie, req_pam, req_gene_start, req_gene_end, rfc and so on.
@@ -243,6 +254,8 @@ int main(int args,char *argv[]){
         }
     }
 
+    dc_save();
+
     sort(in_site,in_site+ini,cmp_in_site);  // Sort & Output
 
     root=cJSON_CreateObject();
@@ -256,8 +269,8 @@ int main(int args,char *argv[]){
     cJSON_AddStringToObject(msg,"location",buffer);
     cJSON_AddItemToObject(root,"message",msg);
 
+    vector<cJSON*> list;
     list.clear();
-
     for(i=0;i<ini && i!=smallOutputNumber;i++){
         cJSON *ans=cJSON_CreateObject();
         sprintf(buffer,"#%d",i+1);
@@ -270,46 +283,14 @@ int main(int args,char *argv[]){
         cJSON_AddNumberToObject(ans,"Sspe",(int)in_site[i].Sspe);
         cJSON_AddNumberToObject(ans,"Seff",(int)in_site[i].Seff);
         cJSON_AddNumberToObject(ans,"count",in_site[i].count);
-        vector<cJSON*>sublist;
-        sublist.clear();
-        for(j=0;j<in_site[i].count && j!=smallOutputNumber;j++){
-            cJSON *subans=cJSON_CreateObject();
-            int x=in_site[i].ot[j];
-            sprintf(buffer,"%s%s",psb_site[x].nt,psb_site[x].pam);
-            cJSON_AddStringToObject(subans,"osequence",buffer);
-            int omms;
-            double score=subscore(i,x,&omms,0);
-            cJSON_AddNumberToObject(subans,"oscore",score);
-            cJSON_AddNumberToObject(subans,"omms",omms);
-            char xs[2];
-            xs[0]=psb_site[x].strand;
-            xs[1]=0;
-            cJSON_AddStringToObject(subans,"ostrand",xs);
-            sprintf(buffer,"%d:%d",psb_site[x].chromosome,psb_site[x].index);
-            cJSON_AddStringToObject(subans,"oposition",buffer);
-            if(psb_site[x].region) strcpy(buffer,"Intergenic");
-            else strcpy(buffer,"exco");
-            cJSON_AddStringToObject(subans,"oregion",buffer);
-            sublist.push_back(subans);
-        }
-        cJSON_AddItemToObject(ans,"offtarget",Create_array_of_anything(&sublist[0],sublist.size()));
+        cJSON_AddItemToObject(ans,"offtarget",in_site[i].otj);
         list.push_back(ans);
     }
 
-    cJSON_AddItemToObject(root,"result",Create_array_of_anything(&list[0],list.size()));
+    cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
-    fprintf(fopen("d:/out2.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root))); //
-//    printf(NomoreSpace(argv[0]=cJSON_Print(root))); //
+    fprintf(fopen("d:/out_hvDC.txt","w"),"%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
 
     free(argv[0]);
-    return 0;
-
-Error:
-    cJSON *root_error=cJSON_CreateObject();
-    cJSON_AddNumberToObject(root_error,"status",1);
-    cJSON_AddStringToObject(root_error,"message",argv[0]);
-
-    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root_error))); //
-
     return 0;
 }

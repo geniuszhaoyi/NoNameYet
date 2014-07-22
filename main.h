@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <algorithm>
 #include <vector>
+#include <map>
 using namespace std;
 
 #include "cJSON/cJSON.h"
@@ -15,6 +17,7 @@ using namespace std;
 #define NUM_NO 4
 #define NUM_CHROMOSOME 30
 #define GENE_LEN 8000000
+#define DCFILE_LEN 8000000
 
 typedef struct ptt{
     int s,t;
@@ -26,13 +29,14 @@ typedef struct ptt{
 typedef struct site{
     char nt[LEN+1];
     char pam[PAM_LEN+1];
-    int index;
+    int index; // position
     int count;
     int chromosome;
     char region;
     char strand;
     double score,Sspe,Seff;
     vector <int> ot;
+    cJSON *otj;
 }site;
 
 typedef struct restrict{
@@ -63,9 +67,22 @@ extern site in_site[1000000];
 extern char str[NUM_CHROMOSOME][GENE_LEN];
 extern char wai[NUM_CHROMOSOME][GENE_LEN];
 
+extern cJSON *dc_root;
+
 struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN],const char*);
 
 int readLine(FILE *);
+cJSON *Create_array_of_anything(cJSON **objects,int num);
 
 double subscore(int,int,int*,int);
 return_struct score(int,int*,int);
+
+char *NomoreSpace(char *str);
+char *_NomoreSpace(char *str);
+
+void generate_filename(char *str,const char *req_specie,const char *req_kind,const char *pam,const int type);
+void dc_init(const char *fn);
+void dc_save();
+cJSON *dc_put(int islegal,int ini);
+cJSON *dc_get(int gene,int position,char strand);
+

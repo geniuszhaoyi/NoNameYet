@@ -1,5 +1,3 @@
-#include <math.h>
-
 #include "main.h"
 
 const double M[]={0,0,0.014,0,0,0.395,0.317,0,0.389,0.079,0.445,0.508,0.613,0.851,0.732,0.828,0.615,0.804,0.685,0.583};
@@ -95,14 +93,30 @@ return_struct score(int ii,int *pini,int type){
     int i;
     return_struct rs;
 
+    in_site[ini]=psb_site[ii];
+    in_site[ini].ot.clear();
+
     if(check_rfc(ini)==0){
         rs.dou[0]=-1.0;
         rs.dou[1]=0.0;
         rs.dou[2]=0.0;
+        dc_put(0,ini);
+        return rs;
     }
 
-    in_site[ini]=psb_site[ii];
-    in_site[ini].ot.clear();
+    cJSON *cache=dc_get(in_site[ini].chromosome,in_site[ini].index,in_site[ini].strand);
+    if(cache!=NULL){
+        in_site[ini].score=cJSON_GetObjectItem(cache,"score")->valuedouble;
+        in_site[ini].Sspe=cJSON_GetObjectItem(cache,"Sspe")->valuedouble;
+        in_site[ini].Seff=cJSON_GetObjectItem(cache,"Seff")->valuedouble;
+        in_site[ini].count=cJSON_GetObjectItem(cache,"count")->valuedouble;
+        in_site[ini].otj=cJSON_GetObjectItem(cache,"offtarget");
+        (*pini)++;
+        rs.dou[0]=in_site[ini].score;
+        rs.dou[1]=in_site[ini].Sspe;
+        rs.dou[2]=in_site[ini].Seff;
+        return rs;
+    }
 
     for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=5;
@@ -138,5 +152,8 @@ return_struct score(int ii,int *pini,int type){
         (*pini)++;
         rs.dou[0]=sum;
     }
+
+    in_site[ini].otj=dc_put(1,ini);
+
     return rs;
 }
