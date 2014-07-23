@@ -75,7 +75,7 @@ int readLine(FILE *);
 cJSON *Create_array_of_anything(cJSON **objects,int num);
 
 double subscore(int,int,int*,int);
-return_struct score(int,int*,int);
+return_struct score(int,int*,int,double);
 
 char *NomoreSpace(char *str);
 char *_NomoreSpace(char *str);

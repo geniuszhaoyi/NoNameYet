@@ -39,10 +39,22 @@ cJSON *Create_array_of_anything(cJSON **objects,int num)
 	return root;
 }
 
+//R=A,G; M=A,C; W=A,T; S=C,G; K=G,T; Y=C,T; H=A,C,T; V=A,C,G; B=C,G,T; D=A,G,T; N=A,G,C,T
 int check_pam(const char *str,const char *pam){
     for(;*pam;pam++,str++){
+        if(*pam=='R' && (*str=='A' || *str=='G')) continue;
+        if(*pam=='M' && (*str=='A' || *str=='C')) continue;
+        if(*pam=='W' && (*str=='A' || *str=='T')) continue;
+        if(*pam=='S' && (*str=='C' || *str=='G')) continue;
+        if(*pam=='K' && (*str=='G' || *str=='T')) continue;
+        if(*pam=='Y' && (*str=='C' || *str=='T')) continue;
+        if(*pam=='H' && (*str=='A' || *str=='C' || *str=='T')) continue;
+        if(*pam=='V' && (*str=='A' || *str=='C' || *str=='G')) continue;
+        if(*pam=='B' && (*str=='C' || *str=='G' || *str=='T')) continue;
+        if(*pam=='D' && (*str=='A' || *str=='G' || *str=='T')) continue;
         if(*pam=='N' || *pam=='n') continue;
-        if(*str!=*pam) return 0;
+        if(*pam==*str) continue;
+        return 0;
     }
     return 1;
 }
@@ -79,7 +91,7 @@ char *_NomoreSpace(char *str){
     return str;
 }
 
-char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:336..2798\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:1..3000\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 
 int check_req(cJSON *request){
     int clt=3;
@@ -161,6 +173,12 @@ int main(int args,char *argv[]){
     ptts_num=rs.ptts_num;
     num_chromosome=rs.num_chromosome;
     for(i=1;i<=num_chromosome;i++) len[i]=rs.len[i];
+
+    double req_r1=0.65;
+    cJSON_temp=cJSON_GetObjectItem(request,"gene");
+    if(cJSON_temp){
+        req_r1=cJSON_GetObjectItem(request,"r1")->valuedouble;
+    }
 
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
     int req_id,req_gene_start,req_gene_end;
@@ -250,7 +268,7 @@ int main(int args,char *argv[]){
             else j=1;
         }
         if(j){
-            score(i,&ini,req_type);
+            score(i,&ini,req_type,req_r1);
         }
     }
 
@@ -279,6 +297,10 @@ int main(int args,char *argv[]){
         cJSON_AddStringToObject(ans,"grna",buffer);
         sprintf(buffer,"%d:%d",in_site[i].chromosome,in_site[i].index);
         cJSON_AddStringToObject(ans,"position",buffer);
+        char xs[2];
+        xs[0]=in_site[i].strand;
+        xs[1]=0;
+        cJSON_AddStringToObject(ans,"strand",xs);
         cJSON_AddNumberToObject(ans,"total_score",(int)in_site[i].score);
         cJSON_AddNumberToObject(ans,"Sspe",(int)in_site[i].Sspe);
         cJSON_AddNumberToObject(ans,"Seff",(int)in_site[i].Seff);
@@ -289,7 +311,7 @@ int main(int args,char *argv[]){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
-    fprintf(fopen("d:/out_hvDC.txt","w"),"%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
+    fprintf(fopen("d:/ans.txt","w"),"%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
 
     free(argv[0]);
     return 0;

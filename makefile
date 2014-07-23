@@ -16,6 +16,7 @@ ptt_readin.o : ptt_readin.cpp main.h cJSON/cJSON.h
 
 score.o : score.cpp main.h cJSON/cJSON.h
 	$(cc) -c score.cpp
+	rm ../Database/DataCache/*
 
 opdb.o : opdb.cpp main.h cJSON/cJSON.h
 	$(cc) -c opdb.cpp

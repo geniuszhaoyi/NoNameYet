@@ -63,9 +63,7 @@ void dc_init(const char *fn){
         file=fopen(filename,"r");
     }
 
-    printf("begin fread\n");
     numread=fread(buffer,sizeof(char),DCFILE_LEN,file);
-    printf("  end fread\n");
     buffer[numread]=0;
     dc_root=cJSON_Parse(buffer);
 
@@ -83,10 +81,7 @@ void dc_save(){
     int numwritten;
     FILE *file=fopen(filename,"w+t");
     char *p=NomoreSpace(cJSON_Print(dc_root));
-    printf("%s\n",filename);
-    printf("begin fwrite\n");
     numwritten=fwrite(p,sizeof(char),strlen(p),file);
-    printf("  end fwrite\n");
     if(numwritten==DCFILE_LEN){
         for(numwritten=0;numwritten<25;numwritten++) printf("Error!!!\n");
     }
