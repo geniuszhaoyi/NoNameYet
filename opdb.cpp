@@ -79,7 +79,7 @@ void dc_init(const char *fn){
 
 void dc_save(){
     int numwritten;
-    FILE *file=fopen(filename,"w+t");
+    FILE *file=fopen(filename,"w");
     char *p=NomoreSpace(cJSON_Print(dc_root));
     numwritten=fwrite(p,sizeof(char),strlen(p),file);
     if(numwritten==DCFILE_LEN){

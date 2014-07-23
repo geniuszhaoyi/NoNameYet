@@ -311,7 +311,7 @@ int main(int args,char *argv[]){
 
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
-    fprintf(fopen("d:/ans.txt","w"),"%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
+    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
 
     free(argv[0]);
     return 0;
