@@ -111,9 +111,9 @@ cJSON *dc_put(int islegal,int ini){
     sprintf(buffer,"%c",in_site[ini].strand);
     cJSON_AddStringToObject(no,"strand",buffer);
 
-    cJSON_AddNumberToObject(no,"score",in_site[ini].score);
-    cJSON_AddNumberToObject(no,"Sspe",in_site[ini].Sspe);
-    cJSON_AddNumberToObject(no,"Seff",in_site[ini].Seff);
+//    cJSON_AddNumberToObject(no,"score",in_site[ini].score);
+    cJSON_AddNumberToObject(no,"Sspe",in_site[ini].Sspe_nor);
+    cJSON_AddNumberToObject(no,"Seff",in_site[ini].Seff_nor);
 
     cJSON_AddNumberToObject(no,"count",in_site[ini].count);
 

@@ -91,8 +91,6 @@ char *_NomoreSpace(char *str){
     return str;
 }
 
-char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:1..3000\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
-
 int check_req(cJSON *request){
     int clt=3;
     int i;
@@ -113,6 +111,8 @@ void onError(const char *msg){
     printf("%s\n",NomoreSpace(p=cJSON_Print(root_error)));
     free(p);
 }
+
+char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
@@ -302,40 +302,11 @@ int main(int args,char *argv[]){
         xs[1]=0;
         cJSON_AddStringToObject(ans,"strand",xs);
         cJSON_AddNumberToObject(ans,"total_score",(int)in_site[i].score);
-        cJSON_AddNumberToObject(ans,"Sspe",(int)in_site[i].Sspe);
-        cJSON_AddNumberToObject(ans,"Seff",(int)in_site[i].Seff);
+        cJSON_AddNumberToObject(ans,"Sspe",(int)(req_r1*in_site[i].Sspe_nor));
+        cJSON_AddNumberToObject(ans,"Seff",(int)((1.0-req_r1)*in_site[i].Seff_nor));
         cJSON_AddNumberToObject(ans,"count",in_site[i].count);
-<<<<<<< HEAD
-<<<<<<< HEAD
         cJSON_AddItemToObject(ans,"offtarget",in_site[i].otj);
-=======
-        vector<cJSON*>sublist;
-        sublist.clear();
-        for(j=0;j<in_site[i].count && j!=smallOutputNumber;j++){
-            cJSON *subans=cJSON_CreateObject();
-            int x=in_site[i].ot[j];
-            sprintf(buffer,"%s%s",psb_site[x].nt,psb_site[x].pam);
-            cJSON_AddStringToObject(subans,"osequence",buffer);
-            int omms;
-            sprintf(buffer,"%.2f",subscore(i,x,&omms,0));
-            cJSON_AddStringToObject(subans,"oscore",buffer);
-            cJSON_AddNumberToObject(subans,"omms",omms);
-            char xs[2];
-            xs[0]=psb_site[x].strand;
-            xs[1]=0;
-            cJSON_AddStringToObject(subans,"ostrand",xs);
-            sprintf(buffer,"%d:%d",psb_site[x].chromosome,psb_site[x].index);
-            cJSON_AddStringToObject(subans,"oposition",buffer);
-            if(psb_site[x].region) strcpy(buffer,"Intergenic");
-            else strcpy(buffer,"exco");
-            cJSON_AddStringToObject(subans,"oregion",buffer);
-            sublist.push_back(subans);
-        }
-        cJSON_AddItemToObject(ans,"offtarget",Create_array_of_anything(&sublist[0],sublist.size()));
->>>>>>> e6d3ba13f8f0755c4b1aab65feb3e1723ff1ffa3
-=======
-        cJSON_AddItemToObject(ans,"offtarget",in_site[i].otj);
->>>>>>> origin/DataCache
+
         list.push_back(ans);
     }
 

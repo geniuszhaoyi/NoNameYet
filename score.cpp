@@ -107,15 +107,13 @@ return_struct score(int ii,int *pini,int type,double r1){
 
     cJSON *cache=dc_get(in_site[ini].chromosome,in_site[ini].index,in_site[ini].strand);
     if(cache!=NULL){
-        in_site[ini].score=cJSON_GetObjectItem(cache,"score")->valuedouble;
-        in_site[ini].Sspe=cJSON_GetObjectItem(cache,"Sspe")->valuedouble;
-        in_site[ini].Seff=cJSON_GetObjectItem(cache,"Seff")->valuedouble;
+        //in_site[ini].score=cJSON_GetObjectItem(cache,"score")->valuedouble;
+        in_site[ini].Sspe_nor=rs.dou[1]=cJSON_GetObjectItem(cache,"Sspe")->valuedouble;
+        in_site[ini].Seff_nor=rs.dou[2]=cJSON_GetObjectItem(cache,"Seff")->valuedouble;
+        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=cJSON_GetObjectItem(cache,"count")->valuedouble;
         in_site[ini].otj=cJSON_GetObjectItem(cache,"offtarget");
         (*pini)++;
-        rs.dou[0]=in_site[ini].score;
-        rs.dou[1]=in_site[ini].Sspe;
-        rs.dou[2]=in_site[ini].Seff;
         return rs;
     }
 
@@ -131,23 +129,23 @@ return_struct score(int ii,int *pini,int type,double r1){
     }
     //sum=sigma+S1
     if(type==1 && Nph>3){
-        in_site[ini].Sspe=rs.dou[1]=max(r1*(100-sum),0.0);
-        in_site[ini].Seff=rs.dou[2]=r2*(100-Sgc-S20);
-        in_site[ini].score=in_site[ini].Sspe+in_site[ini].Seff;
+        in_site[ini].Sspe_nor=rs.dou[1]=max(100-sum,0.0);
+        in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
+        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
         rs.dou[0]=0.0;
     }else if(type==1){
-        in_site[ini].Sspe=rs.dou[1]=max(r1*(100-sum),0.0);
-        in_site[ini].Seff=rs.dou[2]=r2*(100-Sgc-S20);
-        in_site[ini].score=rs.dou[0]=in_site[ini].Sspe+in_site[ini].Seff;
+        in_site[ini].Sspe_nor=rs.dou[1]=max(100-sum,0.0);
+        in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
+        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
     }else{
         sum=sum-Sgc-S20+7;
-        in_site[ini].Sspe=rs.dou[1]=r1*(sum);
-        in_site[ini].Seff=rs.dou[2]=r2*(100-Sgc-S20);
-        in_site[ini].score=rs.dou[0]=in_site[ini].Sspe+in_site[ini].Seff;
+        in_site[ini].Sspe_nor=rs.dou[1]=sum;
+        in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
+        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
         (*pini)++;
     }
