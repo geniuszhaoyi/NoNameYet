@@ -1,5 +1,5 @@
 cc = g++
-obj = main.o ptt_readin.o score.o cJSON.o
+obj = main.o ptt_readin.o score.o cJSON.o opdb.o
 main = ../main
 
 all: $(obj)
@@ -16,6 +16,10 @@ ptt_readin.o : ptt_readin.cpp main.h cJSON/cJSON.h
 
 score.o : score.cpp main.h cJSON/cJSON.h
 	$(cc) -c score.cpp
+	rm ../Database/DataCache/*
+
+opdb.o : opdb.cpp main.h cJSON/cJSON.h
+	$(cc) -c opdb.cpp
 
 .PHONY : clean
 clean :

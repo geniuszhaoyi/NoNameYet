@@ -2,6 +2,7 @@
 #My ignored_files setting
 #################
 
+Database/
 bin/
 obj/
 *.o
