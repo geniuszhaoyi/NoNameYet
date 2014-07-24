@@ -306,6 +306,7 @@ int main(int args,char *argv[]){
         cJSON_AddNumberToObject(ans,"Seff",(int)in_site[i].Seff);
         cJSON_AddNumberToObject(ans,"count",in_site[i].count);
 <<<<<<< HEAD
+<<<<<<< HEAD
         cJSON_AddItemToObject(ans,"offtarget",in_site[i].otj);
 =======
         vector<cJSON*>sublist;
@@ -332,6 +333,9 @@ int main(int args,char *argv[]){
         }
         cJSON_AddItemToObject(ans,"offtarget",Create_array_of_anything(&sublist[0],sublist.size()));
 >>>>>>> e6d3ba13f8f0755c4b1aab65feb3e1723ff1ffa3
+=======
+        cJSON_AddItemToObject(ans,"offtarget",in_site[i].otj);
+>>>>>>> origin/DataCache
         list.push_back(ans);
     }
 
