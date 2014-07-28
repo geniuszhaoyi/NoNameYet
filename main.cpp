@@ -158,18 +158,7 @@ int main(int args,char *argv[]){
     int ptts_num;
     int len[NUM_CHROMOSOME];
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
-    if(strcmp(req_specie,"SARS")==0){
-        rs=info_readin(PTT_SARS,ptts,str,wai,NULL);
-    }else if(strcmp(req_specie,"E.coli")==0){
-        cJSON_temp=cJSON_GetObjectItem(request,"kind");
-        if(cJSON_temp) strcpy(req_kind,cJSON_temp->valuestring);
-        rs=info_readin(PTT_ECOLI,ptts,str,wai,req_kind);
-    }else if(strcmp(req_specie,"Saccharomycetes")==0){
-        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str,wai,NULL);
-    }else{
-        onError("no specie");
-        return 0;
-    }
+    info_readin(req_specie,str);
     ptts_num=rs.ptts_num;
     num_chromosome=rs.num_chromosome;
     for(i=1;i<=num_chromosome;i++) len[i]=rs.len[i];

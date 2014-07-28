@@ -1,6 +1,6 @@
 #include "main.h"
 
-struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN],char wai[][GENE_LEN],const char *ctrl){
+struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
     int ptti=0;
     return_struct rs;
 
