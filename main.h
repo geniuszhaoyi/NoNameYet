@@ -7,6 +7,7 @@
 using namespace std;
 
 #include "cJSON/cJSON.h"
+#include "mysql.h"
 
 #define PTT_SARS 0
 #define PTT_ECOLI 1
@@ -18,6 +19,7 @@ using namespace std;
 #define NUM_CHROMOSOME 30
 #define GENE_LEN 8000000
 #define DCFILE_LEN 8000000
+#define NODE_SIZE 1000000
 
 typedef struct ptt{
     int s,t;
@@ -56,20 +58,22 @@ struct return_struct{
 
 extern restrict req_restrict;
 
-extern ptt ptts[1000000];
+extern ptt ptts[NODE_SIZE];
 
 extern int pi;
-extern site psb_site[1000000];
+extern site psb_site[NODE_SIZE];
 
 extern int ini;
-extern site in_site[1000000];
+extern site in_site[NODE_SIZE];
 
 extern char str[NUM_CHROMOSOME][GENE_LEN];
 extern char wai[NUM_CHROMOSOME][GENE_LEN];
 
 extern cJSON *dc_root;
 
-struct return_struct info_readin(int,ptt*,char[][GENE_LEN],char[][GENE_LEN],const char*);
+extern MYSQL *my_conn;
+
+struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]);
 
 int readLine(FILE *);
 cJSON *Create_array_of_anything(cJSON **objects,int num);
@@ -80,9 +84,11 @@ return_struct score(int,int*,int,double);
 char *NomoreSpace(char *str);
 char *_NomoreSpace(char *str);
 
-void generate_filename(char *str,const char *req_specie,const char *req_kind,const char *pam,const int type);
+void generate_filename(char *str,const char *req_specie,const char *pam,const int type);
 void dc_init(const char *fn);
 void dc_save();
 cJSON *dc_put(int islegal,int ini);
 cJSON *dc_get(int gene,int position,char strand);
 
+int get_Chr_No(const char*,const char*);
+cJSON *getlineregion(int,int,int);

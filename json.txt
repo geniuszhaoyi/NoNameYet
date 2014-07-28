@@ -1,0 +1,121 @@
+软件 <=> 后台
+
+输入：
+*type		1			1=针对基因敲除，2=针对基因干扰，暂时默认1
+specie		E.coil			物种
+*gene		thrA			基因代号
+*location	1:336..2798		碱基位置
+pam		NGG			PAM序列 [1]
+*r1		0.65			r1, r2=1-r1暂时非必需
+rfc		"000000"		字符串，1为选用，0为未选用该RFC	RFC: 10, 12, 12a, 21, 23, 25
+
+例：
+{
+	"specie":"E.coli",
+	"location":"1:336..2798",
+	"pam":"NGG",
+	"rfc":"100101"
+}
+
+
+输出：
+status		0			返回状态	（ 0：成功，其他：失败）
+message		no args			返回信息	（可能没有此项）
+specie		E.coil			物种
+gene		thrA			基因代号
+location	1:336..2798		碱基位置
+region		array[]			区域说明	
+{
+  endpoint	1807			结束位点	（此区域范围即为上一个结束位点(或起始点)到这一个结束位点）
+  description	intergenic		区域说明
+}
+result		array[]
+{
+  grna		TCGGTCCCACGCCCCGCGCCCGG	20+3的gRNA
+  position	2:15413205		基因中的位置
+  strand	+			DNA的哪条链 +/-
+  total_score	86			候选基因的脱靶总分
+  Sspe		93			特异性分数
+  Seff		7			活性分数
+  count		2			可能脱靶位置数
+  offtarget	array[]
+  {
+    osequence	CTTTTGTGCAGAAAATCCATGGG	其他位置相似的20+3
+    oscore	3.5			此序列脱靶单个得分
+    omms	4			碱基不匹配数
+    oposition	3:4158			此序列的位置
+    ostrand	+			DNA的哪条链 +/-
+    oregion	Intergenic		此序列是否在编码区	(暂时不具有意义)
+  }
+}
+
+正常时返回：
+{
+"status":	0,
+"message":	{
+"specie":	"E.coli",
+"kind":	"E.coli K12-MG1655",
+"gene":	"",
+"location":	"1:336..2798"
+},
+"result":	[{"key":  "#1",
+		"grna": "GAAGTTCGGCGGTACATCAGTGG",
+		"position":     "1:368",
+		"total_score":  100,
+		"count":        0,
+		"offtarget":    []
+}, {
+		"key":  "#2",
+		"grna": "TAATGAAAAAGGCGAACTGGTGG",
+		"position":     "1:935",
+		"total_score":  100,
+		"count":        0,
+		"offtarget":    []
+}, {
+		"key":  "#3",
+		"grna": "TGGAAAGCAATGCCAGGCAGGGG",
+		"position":     "1:427",
+		"total_score":  100,
+		"count":        0,
+		"offtarget":    []
+}, {
+		"key":  "#4",
+		"grna": "CAAAATCACCAACCACCTGGTGG",
+		"position":     "1:479",
+		"total_score":  100,
+		"count":        0,
+		"offtarget":    []
+},
+…………
+{
+		"key":  "#44",
+		"grna": "ATTTTTGCCGAACTTTTGACGGG",
+		"position":     "1:564",
+		"total_score":  91,
+		"count":			2,
+		"offtarget":		[{
+"osequence":	"ATTTTCGCCAAACATTTGGCAGG",
+			"oscore":		0.954750,
+			"omms":		4,
+			"ostrand":	"-",
+			"oposition":	"1:1924344",
+			"oregion":	"exco"
+}, {
+			"osequence":	"ATTGTTGCGCAACTTTTGGCTGG",
+			"oscore":		0.480417,
+			"omms": 	4,
+			"ostrand":	"-",
+			"oposition":	"1:3827949",
+			"oregion":      "exco"
+}]
+}]
+}
+
+出现错误时：
+{
+"status":1,
+"message":"illegal args"
+}
+
+
+[1] R=A,G; M=A,C; W=A,T; S=C,G; K=G,T; Y=C,T; H=A,C,T; V=A,C,G; B=C,G,T; D=A,G,T; N=A, G, C, T

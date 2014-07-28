@@ -14,6 +14,8 @@ site in_site[1000000];
 char str[NUM_CHROMOSOME][GENE_LEN];
 char wai[NUM_CHROMOSOME][GENE_LEN];
 
+MYSQL *my_conn;
+
 bool cmp_in_site(site a,site b){
     return a.score>b.score;
 }
@@ -112,7 +114,7 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"E.coli\",\"kind\":\"E.coli K12-MG1655\",\"location\":\"1:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomycetes\",\"location\":\"1:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
@@ -122,8 +124,6 @@ int main(int args,char *argv[]){
     int req_type=1;
     char buffer[30];
     char req_gene[20]={0};
-    cJSON *msg;
-    char req_kind[50]="E.coli K12-DH10B";
 
     pi=0;
     ini=0;
@@ -158,7 +158,16 @@ int main(int args,char *argv[]){
     int ptts_num;
     int len[NUM_CHROMOSOME];
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
-    info_readin(req_specie,str);
+    if(strcmp(req_specie,"SARS")==0){
+        rs=info_readin(PTT_SARS,ptts,str);
+    }else if(strcmp(req_specie,"E.coli")==0){
+        rs=info_readin(PTT_ECOLI,ptts,str);
+    }else if(strcmp(req_specie,"Saccharomycetes")==0){
+        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str);
+    }else{
+        onError("no specie");
+        return 0;
+    }
     ptts_num=rs.ptts_num;
     num_chromosome=rs.num_chromosome;
     for(i=1;i<=num_chromosome;i++) len[i]=rs.len[i];
@@ -196,7 +205,7 @@ int main(int args,char *argv[]){
     req_restrict.rfc23=req_rfc[4]-48;
     req_restrict.rfc25=req_rfc[5]-48;
 
-    generate_filename(buffer,req_specie,req_kind,req_pam,req_type);
+    generate_filename(buffer,req_specie,req_pam,req_type);
     dc_init(buffer);
     /*
     This part above is for read in JSON-style request.
@@ -204,6 +213,13 @@ int main(int args,char *argv[]){
     At the same time, it reads in ptt file for specie,
     and also open files.
     */
+
+    my_conn=mysql_init(NULL);
+    if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","db",3306,NULL,0)){
+    }else{
+        onError("database connect error");
+        return 0;
+    }
 
     for(int id=1;id<=num_chromosome;id++){
         for(i=LEN;i<len[id]-req_pam_len;i++){       // All possible gRNAs, +direction
@@ -268,13 +284,13 @@ int main(int args,char *argv[]){
     root=cJSON_CreateObject();
     cJSON_AddNumberToObject(root,"status",0);
 
-    msg=cJSON_CreateObject();
-    cJSON_AddStringToObject(msg,"specie",req_specie);
-    cJSON_AddStringToObject(msg,"kind",req_kind);
-    cJSON_AddStringToObject(msg,"gene",req_gene);
+    cJSON_AddStringToObject(root,"specie",req_specie);
+    cJSON_AddStringToObject(root,"gene",req_gene);
     sprintf(buffer,"%d:%d..%d",req_id,req_gene_start,req_gene_end);
-    cJSON_AddStringToObject(msg,"location",buffer);
-    cJSON_AddItemToObject(root,"message",msg);
+    cJSON_AddStringToObject(root,"location",buffer);
+    sprintf(buffer,"%d",req_id);
+//    cJSON_temp=getlineregion(get_Chr_No(req_specie,buffer),req_gene_start,req_gene_end);
+    cJSON_AddItemToObject(root,"region",cJSON_temp);
 
     vector<cJSON*> list;
     list.clear();
@@ -304,5 +320,7 @@ int main(int args,char *argv[]){
     printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
 
     free(argv[0]);
+    mysql_close(my_conn);
+
     return 0;
 }

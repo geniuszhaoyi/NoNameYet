@@ -3,12 +3,11 @@
 #define K 100000000000000
 #define OFFSET 97
 
-/*typedef struct dcset{
-    char req_specie[50];
-    char req_kind[50];
-    char pam[PAM_LEN];
-    int type;   //score type
-}dcset;*/
+cJSON *dc_root;
+map<long long int,int> mp;
+
+char filename[196]="Database/DataCache/";
+char buffer[DCFILE_LEN+1];
 
 bool cmp(cJSON *a,cJSON *b){
     double as=cJSON_GetObjectItem(a,"oscore")->valuedouble;
@@ -16,12 +15,9 @@ bool cmp(cJSON *a,cJSON *b){
     return as>bs;
 }
 
-void generate_filename(char *str,const char *req_specie,const char *req_kind,const char *pam,const int type){
+void generate_filename(char *str,const char *req_specie,const char *pam,const int type){
     *str=0;
     strcpy(str,req_specie);
-    strcat(str,";");
-
-    if(req_kind) strcat(str,req_kind);
     strcat(str,";");
 
     strcat(str,pam);
@@ -33,12 +29,6 @@ void generate_filename(char *str,const char *req_specie,const char *req_kind,con
 
     strcat(str,".dat");
 }
-
-cJSON *dc_root;
-map<long long int,int> mp;
-
-char filename[196]="Database/DataCache/";
-char buffer[DCFILE_LEN+1];
 
 long long int getIndex(cJSON *node){
     int g;
@@ -151,32 +141,3 @@ cJSON *dc_put(int islegal,int ini){
 
     return otj;
 }
-
-/*
-#include<stdio.h>
-intmain(void)
-{
-    FILE *stream;
-    char list[30];
-    int i,numread,numwritten; //Openfileintextmode:
-    if((stream=fopen("fread.out","w+t"))!=NULL)
-    {
-        for(i=0;i<25;i++)
-            list[i]=(char)('z'-i);¡¡// Write25characterstostream
-        numwritten=fwrite(list,sizeof(char),25,stream);
-        printf("Wrote%ditems\n",numwritten);
-        fclose(stream);
-    }
-    else
-        printf("Problemopeningthefile\n");
-    if((stream=fopen("fread.out","r+t"))!=NULL)
-    { //Attempttoreadin25characters
-        numread=fread(list,sizeof(char),25,stream);
-        printf("Numberofitemsread=%d\n",numread);
-        printf("Contentsofbuffer=%.25s\n",list);
-        fclose(stream);
-    }
-    else
-        printf("Filecouldnotbeopened\n");
-}
-*/

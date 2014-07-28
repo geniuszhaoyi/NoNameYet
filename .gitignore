@@ -10,6 +10,7 @@ obj/
 *.layout
 *.depend
 *.cbp
+*.dll
 
 #################
 ## Eclipse
