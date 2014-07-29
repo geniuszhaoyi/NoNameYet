@@ -32,6 +32,7 @@ int get_Chr_No(const char *specie,const char *chr_name){
 }
 
 cJSON *getlineregion(int Chr_No,int start,int end){
+
     cJSON *root=cJSON_CreateArray();
     nt=0;
     MYSQL_RES *result;
@@ -39,27 +40,34 @@ cJSON *getlineregion(int Chr_No,int start,int end){
     char buffer[200];
 
     int res;
-    sprintf(buffer,"SELECT gene_Start, gene_end, gene_UTRstart, gene_UTRend FROM Table_gene where Chr_No=%d and gene_Start<=%d and gene_end>=%d;",Chr_No,start,end);
+    sprintf(buffer,"SELECT gene_Start, gene_end, gene_UTRstart, gene_UTRend FROM Table_gene where Chr_No=%d and gene_Start<=%d and gene_end>=%d;",Chr_No,end,start);
     res=mysql_query(my_conn,buffer);
     if(res) return NULL;
     result=mysql_store_result(my_conn);
     while((sql_row=mysql_fetch_row(result))){
+        int start=atoi(sql_row[0]),end=atoi(sql_row[1]);
+        int utrstart=atoi(sql_row[0]),utrend=atoi(sql_row[1]);
+        if(sql_row[2][0]!='N') utrstart-=atoi(sql_row[2]);
+        if(sql_row[3][0]!='N') utrend+=atoi(sql_row[3]);
         //new node for gene
-        ns[nt].s=atoi(sql_row[2]);
-        ns[nt].t=atoi(sql_row[3]);
+        ns[nt].s=start;
+        ns[nt].t=end;
         ns[nt].type=REGION_GENE;
         nt++;
         //new node for UTR
-        ns[nt].s=atoi(sql_row[0]);
-        ns[nt].t=atoi(sql_row[2]);
-        ns[nt].type=REGION_UTR;
-        nt++;
-        ns[nt].s=atoi(sql_row[1]);
-        ns[nt].t=atoi(sql_row[3]);
-        ns[nt].type=REGION_UTR;
-        nt++;
+        if(start!=utrstart){
+            ns[nt].s=utrstart;
+            ns[nt].t=start-1;
+            ns[nt].type=REGION_UTR;
+            nt++;
+        }
+        if(end!=utrend){
+            ns[nt].s=end+1;
+            ns[nt].t=utrend;
+            ns[nt].type=REGION_UTR;
+            nt++;
+        }
     }
-
     sprintf(buffer,"SELECT gene_Start, gene_end FROM Table_region as r JOIN Table_gene as g where r.gene_ID=g.gene_ID and Chr_No=%d and region_Start<=%d and region_end>=%d;",Chr_No,start,end);
     res=mysql_query(my_conn,buffer);
     if(res) return NULL;
@@ -75,17 +83,17 @@ cJSON *getlineregion(int Chr_No,int start,int end){
     sort(ns,ns+nt,cmp2);
 
     int i;
-    int last=start,mark_gene=0;
+    int last=start,mark_gene=-1;
     for(i=0;i<nt;i++){
-        if(last<ns[i].s){
+        if(last+1<ns[i].s){
             if(ns[i].s<mark_gene){
                 cJSON *n=cJSON_CreateObject();
-                cJSON_AddNumberToObject(n,"endpoint",ns[i].s);
+                cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
                 cJSON_AddStringToObject(n,"description","intron");
                 cJSON_AddItemToArray(root,n);
             }else{
                 cJSON *n=cJSON_CreateObject();
-                cJSON_AddNumberToObject(n,"endpoint",ns[i].s);
+                cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
                 cJSON_AddStringToObject(n,"description","intergenic");
                 cJSON_AddItemToArray(root,n);
             }
@@ -111,12 +119,12 @@ cJSON *getlineregion(int Chr_No,int start,int end){
     if(last<end){
         if(ns[i].s<mark_gene){
             cJSON *n=cJSON_CreateObject();
-            cJSON_AddNumberToObject(n,"endpoint",ns[i].s);
+            cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
             cJSON_AddStringToObject(n,"description","intron");
             cJSON_AddItemToArray(root,n);
         }else{
             cJSON *n=cJSON_CreateObject();
-            cJSON_AddNumberToObject(n,"endpoint",ns[i].s);
+            cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
             cJSON_AddStringToObject(n,"description","intergenic");
             cJSON_AddItemToArray(root,n);
         }

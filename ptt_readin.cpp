@@ -24,7 +24,6 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
             readLine(ff);
             while(fscanf(ff,"%c",&ch)==1){
                 if(ch==10) continue;
-                wai[id][i]=0;
                 str[id][i++]=ch;
             }
             rs.len[id]=i;
@@ -41,9 +40,6 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
                 ptts[ptti].strand='.';
                 strcpy(ptts[ptti].gene,buffer2);
                 ptti++;
-                for(i=s;i<=t;i++){
-                    wai[id][i]=1;
-                }
             }
             fclose(fp);
 
@@ -76,7 +72,6 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
             readLine(ff);
             while(fscanf(ff,"%c",&ch)==1){
                 if(ch==10) continue;
-                wai[id][i]=0;
                 str[id][i++]=ch;
             }
             rs.len[id]=i;
@@ -95,9 +90,6 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
                 ptts[ptti].strand=strand;
                 strcpy(ptts[ptti].gene,buffer);
                 ptti++;
-                for(i=s;i<=t;i++){
-                    wai[id][i]=1;
-                }
             }
             fclose(fp);
 
@@ -109,16 +101,17 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
     }
 
     if(type==PTT_SACCHAROMYCETES){
-        FILE *flist=fopen("Database/saccharomycetes/list.txt","r");
+        FILE *flist=fopen("Database/Saccharomycetes/list.txt","r");
+
         int id;
         int id_max=-1;
         char filename1[64],filename2[64],buffer[128];
-        while(fscanf(flist,"%d\t%s\t%s",&id,filename1,filename2)==3){
+        while(fscanf(flist,"%d\t%s\t%s\t%s",&id,filename1,filename2,buffer)==4){
             int s,t;
             char strand;
             int len,pid;
 
-            strcpy(buffer,"Database/saccharomycetes/");
+            strcpy(buffer,"Database/Saccharomycetes/");
             strcat(buffer,filename1);
             FILE *ff=fopen(buffer,"r");
             char ch;
@@ -126,13 +119,12 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
             readLine(ff);
             while(fscanf(ff,"%c",&ch)==1){
                 if(ch==10) continue;
-                wai[id][i]=0;
                 str[id][i++]=ch;
             }
             rs.len[id]=i;
             fclose(ff);
 
-            strcpy(buffer,"Database/saccharomycetes/");
+            strcpy(buffer,"Database/Saccharomycetes/");
             strcat(buffer,filename2);
             FILE *fp=fopen(buffer,"r");
             readLine(fp);
@@ -146,9 +138,6 @@ struct return_struct info_readin(int type,ptt *ptts,char str[][GENE_LEN]){
                 ptts[ptti].strand=strand;
                 strcpy(ptts[ptti].gene,buffer);
                 ptti++;
-                for(i=s;i<=t;i++){
-                    wai[id][i]=1;
-                }
             }
             fclose(fp);
 

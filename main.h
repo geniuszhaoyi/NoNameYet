@@ -67,7 +67,6 @@ extern int ini;
 extern site in_site[NODE_SIZE];
 
 extern char str[NUM_CHROMOSOME][GENE_LEN];
-extern char wai[NUM_CHROMOSOME][GENE_LEN];
 
 extern cJSON *dc_root;
 

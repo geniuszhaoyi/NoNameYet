@@ -102,6 +102,7 @@ return_struct score(int ii,int *pini,int type,double r1){
         rs.dou[1]=0.0;
         rs.dou[2]=0.0;
         dc_put(0,ini);
+        printf(">>rfc?\n");
         return rs;
     }
 
@@ -114,6 +115,7 @@ return_struct score(int ii,int *pini,int type,double r1){
         in_site[ini].count=cJSON_GetObjectItem(cache,"count")->valuedouble;
         in_site[ini].otj=cJSON_GetObjectItem(cache,"offtarget");
         (*pini)++;
+        printf(">>%d\n",*pini);
         return rs;
     }
 

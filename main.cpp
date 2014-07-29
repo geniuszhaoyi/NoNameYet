@@ -114,7 +114,7 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"Saccharomycetes\",\"location\":\"1:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"E.coli\",\"location\":\"1:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 
 int main(int args,char *argv[]){
     const int smallOutputNumber=-1;
@@ -160,8 +160,13 @@ int main(int args,char *argv[]){
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
     if(strcmp(req_specie,"SARS")==0){
         rs=info_readin(PTT_SARS,ptts,str);
+        onError("error specie");
+        return 0;
     }else if(strcmp(req_specie,"E.coli")==0){
-        rs=info_readin(PTT_ECOLI,ptts,str);
+        //temporary change to PTT_SACCHAROMYCETES
+        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str);
+//        onError("error specie");
+//        return 0;
     }else if(strcmp(req_specie,"Saccharomycetes")==0){
         rs=info_readin(PTT_SACCHAROMYCETES,ptts,str);
     }else{
@@ -215,7 +220,7 @@ int main(int args,char *argv[]){
     */
 
     my_conn=mysql_init(NULL);
-    if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","db",3306,NULL,0)){
+    if(mysql_real_connect(my_conn,"127.0.0.1","root","root","CasDB",3306,NULL,0)){
     }else{
         onError("database connect error");
         return 0;
@@ -255,26 +260,13 @@ int main(int args,char *argv[]){
     }
 
     for(i=0;i<pi;i++){
-        fflush(stdout);
         if(psb_site[i].chromosome!=req_id) continue;
         if(psb_site[i].strand=='+'){
             if(psb_site[i].index<req_gene_start || psb_site[i].index+req_pam_len-1>req_gene_end) continue;
-            for(j=psb_site[i].index-LEN;j<psb_site[i].index+req_pam_len-1;j++){
-                if(wai[req_id][j]!=1) break;
-            }
-            if(j<psb_site[i].index+req_pam_len-1) j=0;
-            else j=1;
         }else{
             if(psb_site[i].index-req_pam_len+1<req_gene_start || psb_site[i].index>req_gene_end) continue;
-            for(j=psb_site[i].index-req_pam_len+1;j<psb_site[i].index+LEN;j++){
-                if(wai[req_id][j]!=1) break;
-            }
-            if(j<psb_site[i].index+LEN) j=0;
-            else j=1;
         }
-        if(j){
-            score(i,&ini,req_type,req_r1);
-        }
+        score(i,&ini,req_type,req_r1);
     }
 
     dc_save();
@@ -289,8 +281,8 @@ int main(int args,char *argv[]){
     sprintf(buffer,"%d:%d..%d",req_id,req_gene_start,req_gene_end);
     cJSON_AddStringToObject(root,"location",buffer);
     sprintf(buffer,"%d",req_id);
-//    cJSON_temp=getlineregion(get_Chr_No(req_specie,buffer),req_gene_start,req_gene_end);
-    cJSON_AddItemToObject(root,"region",cJSON_temp);
+    cJSON_temp=getlineregion(1,req_gene_start,req_gene_end);    //temporary change
+    if(cJSON_temp) cJSON_AddItemToObject(root,"region",cJSON_temp);
 
     vector<cJSON*> list;
     list.clear();
