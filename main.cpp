@@ -220,7 +220,7 @@ int main(int args,char *argv[]){
     */
 
     my_conn=mysql_init(NULL);
-    if(mysql_real_connect(my_conn,"127.0.0.1","root","root","CasDB",3306,NULL,0)){
+    if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","db",3306,NULL,0)){
     }else{
         onError("database connect error");
         return 0;
