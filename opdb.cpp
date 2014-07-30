@@ -34,7 +34,7 @@ long long int getIndex(cJSON *node){
     int g;
     long long int p;
     strcpy(buffer,cJSON_GetObjectItem(node,"position")->valuestring);
-    sscanf(buffer,"%d:%lld",&g,&p);
+    sscanf(buffer,"%d:%I64d",&g,&p);
     p+=K*g;
     strcpy(buffer,cJSON_GetObjectItem(node,"strand")->valuestring);
     if(*buffer=='-') p*=-1;

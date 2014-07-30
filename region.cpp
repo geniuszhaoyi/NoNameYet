@@ -68,7 +68,7 @@ cJSON *getlineregion(int Chr_No,int start,int end){
             nt++;
         }
     }
-    sprintf(buffer,"SELECT gene_Start, gene_end FROM Table_region as r JOIN Table_gene as g where r.gene_ID=g.gene_ID and Chr_No=%d and region_Start<=%d and region_end>=%d;",Chr_No,start,end);
+    sprintf(buffer,"SELECT gene_Start, gene_end FROM Table_region as r JOIN Table_gene as g where r.gene_ID=g.gene_ID and Chr_No=%d and rtd_id=1 and region_Start<=%d and region_end>=%d;",Chr_No,start,end);
     res=mysql_query(my_conn,buffer);
     if(res) return NULL;
     result=mysql_store_result(my_conn);

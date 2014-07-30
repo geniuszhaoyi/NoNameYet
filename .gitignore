@@ -3,6 +3,7 @@
 #################
 
 Database/
+json_standard/
 bin/
 obj/
 *.o

@@ -226,7 +226,24 @@ int main(int args,char *argv[]){
         return 0;
     }
 
-    for(int id=1;id<=num_chromosome;id++){
+    int res=mysql_query(my_conn,
+"SELECT sgrna_start, sgrna_strand, sgrna_seq, sgrna_PAM FROM table_sgRNA;");
+    if(res){
+        OnError("database select error");
+        return 0;
+    }
+    result=mysql_store_result(my_conn);
+    while((sql_row=mysql_fetch_row(result))){
+        psb_site[pi].index=atoi(sql_row[0]);
+        psb_site[pi].strand=sql_row[1][0];
+        strcpy(psb_site[pi].nt[j],sql_row[2]);
+        strcpy(psb_site[pi].pam[j],sql_row[3]);
+        psb_site[pi].chromosome=id;
+        pi++;
+    }
+
+
+    /*for(int id=1;id<=num_chromosome;id++){
         for(i=LEN;i<len[id]-req_pam_len;i++){       // All possible gRNAs, +direction
             if(check_pam(str[id]+i,req_pam)){
                 psb_site[pi].index=i;
@@ -257,7 +274,7 @@ int main(int args,char *argv[]){
                 pi++;
             }
         }
-    }
+    }*/
 
     for(i=0;i<pi;i++){
         if(psb_site[i].chromosome!=req_id) continue;
