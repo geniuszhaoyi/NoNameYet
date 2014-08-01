@@ -22,7 +22,8 @@ int get_Chr_No(const char *specie,const char *chr_name){
     MYSQL_RES *result;
     MYSQL_ROW sql_row;
     char buffer[200];
-    res=sprintf(buffer,"SELECT Chr_No FROM Table_Specie as s JOIN Table_chromosome as c WHERE s.Sno=c.Sno and SName='%s' and Chr_Name='%s';",specie,chr_name);
+    sprintf(buffer,"SELECT Chr_No FROM Table_Specie as s JOIN Table_chromosome as c WHERE s.Sno=c.Sno and SName='%s' and Chr_Name='%s';",specie,chr_name);
+    res=mysql_query(my_conn,buffer);
     if(res) return -1;
     result=mysql_store_result(my_conn);
     if((sql_row=mysql_fetch_row(result))){
@@ -32,7 +33,6 @@ int get_Chr_No(const char *specie,const char *chr_name){
 }
 
 cJSON *getlineregion(int Chr_No,int start,int end){
-
     cJSON *root=cJSON_CreateArray();
     nt=0;
     MYSQL_RES *result;

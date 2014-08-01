@@ -3,16 +3,8 @@
 //req_GobalParameter
 restrict req_restrict;
 
-ptt ptts[1000000];
-
-int pi;
-site psb_site[1000000];
-
 int ini;
 site in_site[1000000];
-
-char str[NUM_CHROMOSOME][GENE_LEN];
-char wai[NUM_CHROMOSOME][GENE_LEN];
 
 MYSQL *my_conn;
 
@@ -114,18 +106,15 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"E.coli\",\"location\":\"1:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomyces cerevisiae\",\"location\":\"NC_001134-chromosome2:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 
 int main(int args,char *argv[]){
-    const int smallOutputNumber=-1;
-    int i,j;
+    int i;
     cJSON *root;
-    int num_chromosome;
     int req_type=1;
-    char buffer[30];
+    char buffer[9182+1];
     char req_gene[20]={0};
 
-    pi=0;
     ini=0;
     req_restrict.rfc10=0;
     req_restrict.rfc12=0;
@@ -144,38 +133,19 @@ int main(int args,char *argv[]){
     }
 
     i=1;
-    j=1;
 
     cJSON *cJSON_temp;
     cJSON_temp=cJSON_GetObjectItem(request,"type");
     if(cJSON_temp) req_type=cJSON_temp->valueint;
     char req_pam[PAM_LEN+1];
-    int req_pam_len;
     strcpy(req_pam,cJSON_GetObjectItem(request,"pam")->valuestring);
-    req_pam_len=(int)strlen(req_pam);
     char req_specie[30];
-    struct return_struct rs;
-    int ptts_num;
-    int len[NUM_CHROMOSOME];
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
-    if(strcmp(req_specie,"SARS")==0){
-        rs=info_readin(PTT_SARS,ptts,str);
-        onError("error specie");
-        return 0;
-    }else if(strcmp(req_specie,"E.coli")==0){
-        //temporary change to PTT_SACCHAROMYCETES
-        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str);
-//        onError("error specie");
-//        return 0;
-    }else if(strcmp(req_specie,"Saccharomycetes")==0){
-        rs=info_readin(PTT_SACCHAROMYCETES,ptts,str);
+    if(strcmp(req_specie,"Saccharomyces cerevisiae")==0){
     }else{
         onError("no specie");
         return 0;
     }
-    ptts_num=rs.ptts_num;
-    num_chromosome=rs.num_chromosome;
-    for(i=1;i<=num_chromosome;i++) len[i]=rs.len[i];
 
     double req_r1=0.65;
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
@@ -184,21 +154,17 @@ int main(int args,char *argv[]){
     }
 
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
-    int req_id,req_gene_start,req_gene_end;
+    int req_gene_start,req_gene_end;
+    char req_id[100];
     if(cJSON_temp){
-        strcpy(req_gene,cJSON_temp->valuestring);
-        for(int i=0;i<ptts_num;i++){
-            if(strcmp(req_gene,ptts[i].gene)==0){
-                req_id=ptts[i].chromosome;
-                req_gene_start=ptts[i].s;
-                req_gene_end=ptts[i].t;
-                break;
-            }
-        }
+        onError("temporary not available");
+        return 0;
     }else{
-        char req_location[20];
-        strcpy(req_location,cJSON_GetObjectItem(request,"location")->valuestring);
-        sscanf(req_location,"%d:%d..%d",&req_id,&req_gene_start,&req_gene_end);
+        strcpy(buffer,cJSON_GetObjectItem(request,"location")->valuestring);
+        for(i=0;buffer[i]!=':' && buffer[i]!=0;i++){
+            req_id[i]=buffer[i];
+        }req_id[i]=0;
+        sscanf(buffer+i+1,"%d..%d",&req_gene_start,&req_gene_end);
     }
 
     char req_rfc[10];
@@ -210,8 +176,6 @@ int main(int args,char *argv[]){
     req_restrict.rfc23=req_rfc[4]-48;
     req_restrict.rfc25=req_rfc[5]-48;
 
-    generate_filename(buffer,req_specie,req_pam,req_type);
-    dc_init(buffer);
     /*
     This part above is for read in JSON-style request.
     The result stored in req_specie, req_pam, req_gene_start, req_gene_end, rfc and so on.
@@ -219,74 +183,35 @@ int main(int args,char *argv[]){
     and also open files.
     */
 
+    MYSQL_ROW sql_row;
     my_conn=mysql_init(NULL);
     if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","db",3306,NULL,0)){
     }else{
-        onError("database connect error");
+        sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
+        onError(buffer);
         return 0;
     }
 
-    int res=mysql_query(my_conn,
-"SELECT sgrna_start, sgrna_strand, sgrna_seq, sgrna_PAM FROM table_sgRNA;");
+    int res;
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
+    res=mysql_query(my_conn,buffer);
     if(res){
-        OnError("database select error");
+        onError("database select error1");
         return 0;
     }
-    result=mysql_store_result(my_conn);
+    MYSQL_RES *result=mysql_store_result(my_conn);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s';",req_specie,req_pam);
+    res=mysql_query(my_conn,buffer);
+    if(res){
+        onError("database select error2");
+        return 0;
+    }
+    MYSQL_RES *result_t=mysql_store_result(my_conn);
+
+    mysql_data_seek(result,0);
     while((sql_row=mysql_fetch_row(result))){
-        psb_site[pi].index=atoi(sql_row[0]);
-        psb_site[pi].strand=sql_row[1][0];
-        strcpy(psb_site[pi].nt[j],sql_row[2]);
-        strcpy(psb_site[pi].pam[j],sql_row[3]);
-        psb_site[pi].chromosome=id;
-        pi++;
+        score(result_t,sql_row,&ini,req_type,req_r1);
     }
-
-
-    /*for(int id=1;id<=num_chromosome;id++){
-        for(i=LEN;i<len[id]-req_pam_len;i++){       // All possible gRNAs, +direction
-            if(check_pam(str[id]+i,req_pam)){
-                psb_site[pi].index=i;
-                psb_site[pi].strand='+';
-                psb_site[pi].chromosome=id;
-                for(j=0;j<req_pam_len;j++) psb_site[pi].pam[j]=(str[id]+i)[j];
-                psb_site[pi].pam[j]=0;
-                for(j=0;j<LEN;j++) psb_site[pi].nt[j]=(str[id]+i-LEN)[j];
-                psb_site[pi].nt[j]=0;
-                pi++;
-            }
-        }
-        char req_pam_rev[PAM_LEN];
-        int last=-1;
-        dna_rev(req_pam_rev,req_pam,req_pam_len);
-        for(i=0;i<len[id]-LEN-req_pam_len;i++){     // All possible gRNAs, -direction
-            if(check_pam(str[id]+i,req_pam_rev)){
-                psb_site[pi].index=i+req_pam_len-1;
-                psb_site[pi].strand='-';
-                psb_site[pi].chromosome=id;
-                if(req_pam_len!=last){
-                    last=req_pam_len;
-                }
-                for(j=0;j<req_pam_len;j++) psb_site[pi].pam[j]=dna_rev_char((str[id]+i)[req_pam_len-1-j]);
-                psb_site[pi].pam[j]=0;
-                for(j=0;j<LEN;j++) psb_site[pi].nt[j]=dna_rev_char((str[id]+i+req_pam_len)[LEN-j-1]);
-                psb_site[pi].nt[j]=0;
-                pi++;
-            }
-        }
-    }*/
-
-    for(i=0;i<pi;i++){
-        if(psb_site[i].chromosome!=req_id) continue;
-        if(psb_site[i].strand=='+'){
-            if(psb_site[i].index<req_gene_start || psb_site[i].index+req_pam_len-1>req_gene_end) continue;
-        }else{
-            if(psb_site[i].index-req_pam_len+1<req_gene_start || psb_site[i].index>req_gene_end) continue;
-        }
-        score(i,&ini,req_type,req_r1);
-    }
-
-    dc_save();
 
     sort(in_site,in_site+ini,cmp_in_site);  // Sort & Output
 
@@ -295,21 +220,20 @@ int main(int args,char *argv[]){
 
     cJSON_AddStringToObject(root,"specie",req_specie);
     cJSON_AddStringToObject(root,"gene",req_gene);
-    sprintf(buffer,"%d:%d..%d",req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"%s:%d..%d",req_id,req_gene_start,req_gene_end);
     cJSON_AddStringToObject(root,"location",buffer);
-    sprintf(buffer,"%d",req_id);
-    cJSON_temp=getlineregion(1,req_gene_start,req_gene_end);    //temporary change
+    cJSON_temp=getlineregion(get_Chr_No(req_specie,req_id),req_gene_start,req_gene_end);    //temporary change
     if(cJSON_temp) cJSON_AddItemToObject(root,"region",cJSON_temp);
 
     vector<cJSON*> list;
     list.clear();
-    for(i=0;i<ini && i!=smallOutputNumber;i++){
+    for(i=0;i<ini;i++){
         cJSON *ans=cJSON_CreateObject();
         sprintf(buffer,"#%d",i+1);
         cJSON_AddStringToObject(ans,"key",buffer);
         sprintf(buffer,"%s%s",in_site[i].nt,in_site[i].pam);
         cJSON_AddStringToObject(ans,"grna",buffer);
-        sprintf(buffer,"%d:%d",in_site[i].chromosome,in_site[i].index);
+        sprintf(buffer,"%s:%d",in_site[i].chromosome,in_site[i].index);
         cJSON_AddStringToObject(ans,"position",buffer);
         char xs[2];
         xs[0]=in_site[i].strand;
@@ -323,12 +247,13 @@ int main(int args,char *argv[]){
 
         list.push_back(ans);
     }
-
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
-    printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
+    fprintf(fopen("D:/out.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
+    //printf("%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
 
     free(argv[0]);
+    mysql_free_result(result);
     mysql_close(my_conn);
 
     return 0;

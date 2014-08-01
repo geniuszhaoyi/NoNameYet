@@ -3,8 +3,8 @@
 输入：
 *type		1			1=针对基因敲除，2=针对基因干扰，暂时默认1
 specie		E.coil			物种
-*gene		thrA			基因代号
-*location	1:336..2798		碱基位置
+*gene		thrA			基因代号    //temporary not available
+*location	Chr2:336..2798		碱基位置
 pam		NGG			PAM序列 [1]
 *r1		0.65			r1, r2=1-r1暂时非必需
 rfc		"000000"		字符串，1为选用，0为未选用该RFC	RFC: 10, 12, 12a, 21, 23, 25
@@ -23,7 +23,7 @@ status		0			返回状态	（ 0：成功，其他：失败）
 message		no args			返回信息	（可能没有此项）
 specie		E.coil			物种
 gene		thrA			基因代号
-location	1:336..2798		碱基位置
+location	Chr2:336..2798		碱基位置
 region		array[]			区域说明	
 {
   endpoint	1807			结束位点	（此区域范围即为上一个结束位点(或起始点)到这一个结束位点）
@@ -43,7 +43,7 @@ result		array[]
     osequence	CTTTTGTGCAGAAAATCCATGGG	其他位置相似的20+3
     oscore	3.5			此序列脱靶单个得分
     omms	4			碱基不匹配数
-    oposition	3:4158			此序列的位置
+    oposition	Chr3:4158		此序列的位置
     ostrand	+			DNA的哪条链 +/-
     oregion	Intergenic		此序列是否在编码区	(暂时不具有意义)
   }
