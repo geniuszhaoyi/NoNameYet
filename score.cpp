@@ -112,8 +112,9 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
     double sum=0;
     int gc=0;
     int i;
+    char buffer[9182];
 
-    //MYSQL_ROW row :  sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name
+    //MYSQL_ROW row :  0:sgrna_start, 1:sgrna_end, 2:sgrna_strand, 3:sgrna_seq, 4:sgrna_PAM, 5:Chr_Name, 6:sgrna_ID
     in_site[ini].index=atoi(row[0]);
     in_site[ini].strand=row[2][0];
     strcpy(in_site[ini].nt,row[3]);
@@ -129,13 +130,28 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
         return ;
     }
 
+    sprintf(buffer,"SELECT sgrna_Sspe, sgrna_Seff, sgrna_count, sgrna_offtarget FROM Table_sgRNA WHERE sgrna_ID=%s and sgrna_offtarget IS NOT NULL",row[6]);
+    int res=mysql_query(my_conn,buffer);
+    if(res){
+    }
+    MYSQL_RES *rsdc=mysql_store_result(my_conn);
+    MYSQL_ROW sql_row;
+    if((sql_row=mysql_fetch_row(rsdc))){
+        sscanf(sql_row[0],"%lf",&in_site[ini].Sspe_nor);
+        sscanf(sql_row[1],"%lf",&in_site[ini].Seff_nor);
+        in_site[ini].score=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
+        sscanf(sql_row[2],"%d",&in_site[ini].count);
+        (*pini)++;
+        in_site[ini].otj=cJSON_Parse(sql_row[3]);
+        return ;
+    }
+
     for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=65;
     else if((double)gc/(double)LEN>0.5 && (double)gc/(double)LEN<0.7) Sgc=0;
     else Sgc=35;
     if(in_site[ini].nt[19]!='G') S20=35;
 
-    MYSQL_ROW sql_row;
     mysql_data_seek(result,0);
     while((sql_row=mysql_fetch_row(result))){
         int start=atoi(sql_row[0]);
@@ -170,5 +186,12 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
     int len=in_site[ini].ot.size();
     sort(&(in_site[ini].ot[0]),&(in_site[ini].ot[0])+len,cmp);
     cJSON *otj=Create_array_of_anything(&(in_site[ini].ot[0]),min(20,len));
+    sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row[6]);
+    res=mysql_query(my_conn,buffer);
+    if(res){
+        printf("%s\n\n",buffer);
+        printf("%s\n",mysql_error(my_conn));
+        system("pause");
+    }
     in_site[ini].otj=otj;
 }

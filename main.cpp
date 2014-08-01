@@ -193,7 +193,7 @@ int main(int args,char *argv[]){
     }
 
     int res;
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
