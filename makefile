@@ -1,5 +1,5 @@
 cc = g++
-obj = main.o ptt_readin.o score.o cJSON.o opdb.o region.o
+obj = main.o score.o cJSON.o region.o
 main = ../main
 x= -I/usr/include/mysql -L/usr/lib -lmysqlclient
 
@@ -12,15 +12,9 @@ cJSON.o : cJSON/cJSON.c cJSON/cJSON.h
 main.o: main.cpp main.h cJSON/cJSON.h
 	$(cc) -c main.cpp $(x)
 
-ptt_readin.o : ptt_readin.cpp main.h cJSON/cJSON.h
-	$(cc) -c ptt_readin.cpp $(x)
-
 score.o : score.cpp main.h cJSON/cJSON.h
 	$(cc) -c score.cpp $(x)
 	- rm ../Database/DataCache/*
-
-opdb.o : opdb.cpp main.h cJSON/cJSON.h
-	$(cc) -c opdb.cpp $(x)
 
 region.o : region.cpp main.h cJSON/cJSON.h
 	$(cc) -c region.cpp $(x)
