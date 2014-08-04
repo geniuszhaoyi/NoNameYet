@@ -5,6 +5,7 @@
 specie		E.coil			物种
 *gene		thrA			基因代号    //temporary not available
 *location	Chr2:336..2798		碱基位置
+*blast		ATCAGTCAGTCA		BLAST! 
 pam		NGG			PAM序列 [1]
 *r1		0.65			r1, r2=1-r1暂时非必需
 rfc		"000000"		字符串，1为选用，0为未选用该RFC	RFC: 10, 12, 12a, 21, 23, 25

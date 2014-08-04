@@ -13,6 +13,12 @@ using namespace std;
 #define PTT_ECOLI 1
 #define PTT_SACCHAROMYCETES 2
 
+#define REGION_GENE 5
+#define REGION_UTR 3
+#define REGION_EXON 1
+#define REGION_INTRON 2
+#define REGION_INTERGENIC 4
+
 #define LEN 20
 #define PAM_LEN 20
 #define NUM_NO 4

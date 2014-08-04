@@ -249,8 +249,12 @@ int main(int args,char *argv[]){
     }
     cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
+#ifdef  _WIN32
     fprintf(fopen("D:/out.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
-    //printf("%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
+#endif // _WIN32
+#ifdef  __linux
+    printf("%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
+#endif // __linux
 
     free(argv[0]);
     mysql_free_result(result);
