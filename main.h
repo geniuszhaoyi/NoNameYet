@@ -13,11 +13,11 @@ using namespace std;
 #define PTT_ECOLI 1
 #define PTT_SACCHAROMYCETES 2
 
-#define REGION_GENE 5
-#define REGION_UTR 3
 #define REGION_EXON 1
 #define REGION_INTRON 2
+#define REGION_UTR 3
 #define REGION_INTERGENIC 4
+#define REGION_GENE 5
 
 #define LEN 20
 #define PAM_LEN 20
@@ -33,7 +33,7 @@ typedef struct site{
     int index; // position
     int count;
     char chromosome[100];
-    char region;
+    int region;
     char strand;
     double score,Sspe_nor,Seff_nor;
     vector <cJSON*> ot;
@@ -46,6 +46,7 @@ typedef struct restrict{
     char rfc21;
     char rfc23;
     char rfc25;
+    char region[4+1];
 }restrict;
 
 struct return_struct{
@@ -59,6 +60,7 @@ extern restrict req_restrict;
 
 extern int ini;
 extern site in_site[NODE_SIZE];
+extern const char *region_info[];
 
 extern cJSON *dc_root;
 
@@ -75,3 +77,4 @@ char *_NomoreSpace(char *str);
 
 int get_Chr_No(const char*,const char*);
 cJSON *getlineregion(int,int,int);
+int getRegion(int sgrna_ID,int Chr_No,int sgrna_start,int sgrna_end);

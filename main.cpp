@@ -106,7 +106,8 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"Saccharomyces cerevisiae\",\"location\":\"NC_001134-chromosome2:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"region\":\"0011\",\"specie\":\"Saccharomyces cerevisiae\",\"location\":\"NC_001134-chromosome2:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 int main(int args,char *argv[]){
     int i;
@@ -122,6 +123,10 @@ int main(int args,char *argv[]){
     req_restrict.rfc21=0;
     req_restrict.rfc23=0;
     req_restrict.rfc25=0;
+    req_restrict.region[0]=0;
+    req_restrict.region[1]=0;
+    req_restrict.region[2]=0;
+    req_restrict.region[3]=0;
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
@@ -167,6 +172,14 @@ int main(int args,char *argv[]){
         sscanf(buffer+i+1,"%d..%d",&req_gene_start,&req_gene_end);
     }
 
+    cJSON_temp=cJSON_GetObjectItem(request,"region");
+    if(cJSON_temp){
+        req_restrict.region[0]=(cJSON_temp->valuestring)[0]-48;
+        req_restrict.region[1]=(cJSON_temp->valuestring)[1]-48;
+        req_restrict.region[2]=(cJSON_temp->valuestring)[2]-48;
+        req_restrict.region[3]=(cJSON_temp->valuestring)[3]-48;
+    }
+
     char req_rfc[10];
     strcpy(req_rfc,cJSON_GetObjectItem(request,"rfc")->valuestring);
     req_restrict.rfc10=req_rfc[0]-48;
@@ -193,14 +206,14 @@ int main(int args,char *argv[]){
     }
 
     int res;
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
         return 0;
     }
     MYSQL_RES *result=mysql_store_result(my_conn);
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s';",req_specie,req_pam);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s';",req_specie,req_pam);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error2");
@@ -239,6 +252,7 @@ int main(int args,char *argv[]){
         xs[0]=in_site[i].strand;
         xs[1]=0;
         cJSON_AddStringToObject(ans,"strand",xs);
+        cJSON_AddStringToObject(ans,"region",region_info[in_site[i].region]);
         cJSON_AddNumberToObject(ans,"total_score",(int)in_site[i].score);
         cJSON_AddNumberToObject(ans,"Sspe",(int)(req_r1*in_site[i].Sspe_nor));
         cJSON_AddNumberToObject(ans,"Seff",(int)((1.0-req_r1)*in_site[i].Seff_nor));

@@ -8,6 +8,7 @@ specie		E.coil			物种
 *blast		ATCAGTCAGTCA		BLAST! 
 pam		NGG			PAM序列 [1]
 *r1		0.65			r1, r2=1-r1暂时非必需
+*region		"0000"			区域过滤，1为选用，0为未选用	EXON,INTRON,UTR,INTERGENIC
 rfc		"000000"		字符串，1为选用，0为未选用该RFC	RFC: 10, 12, 12a, 21, 23, 25
 
 例：
@@ -20,7 +21,7 @@ rfc		"000000"		字符串，1为选用，0为未选用该RFC	RFC: 10, 12, 12a, 21, 23, 25
 
 
 输出：
-status		0			返回状态	（ 0：成功，其他：失败）
+status		0			返回状态	（ 0：成功，1：失败，2：还在运行）
 message		no args			返回信息	（可能没有此项）
 specie		E.coil			物种
 gene		thrA			基因代号
@@ -35,6 +36,7 @@ result		array[]
   grna		TCGGTCCCACGCCCCGCGCCCGG	20+3的gRNA
   position	2:15413205		基因中的位置
   strand	+			DNA的哪条链 +/-
+  region	exon			sgRNA是否在编码区
   total_score	86			候选基因的脱靶总分
   Sspe		93			特异性分数
   Seff		7			活性分数

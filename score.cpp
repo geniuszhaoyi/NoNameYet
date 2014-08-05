@@ -9,6 +9,11 @@ bool cmp(cJSON *a,cJSON *b){
     return as>bs;
 }
 
+int check_region(int i){
+    int r=in_site[i].region;
+    return req_restrict.region[r];
+}
+
 int check_rfc(int i){
     char str[LEN+PAM_LEN+3];
     strcpy(str,in_site[i].nt);
@@ -60,6 +65,7 @@ int check_rfc(int i){
     return 1;
 }
 
+//MYSQL_ROW row :  0:sgrna_start, 1:sgrna_end, 2:sgrna_strand, 3:sgrna_seq, 4:sgrna_PAM, 5:Chr_Name, 6:sgrna_ID, 7:Chr_No
 cJSON *cJSON_otj(int ini,MYSQL_ROW row,double oscore,int omms){
     char buffer[4096];
     cJSON *root=cJSON_CreateObject();
@@ -70,7 +76,7 @@ cJSON *cJSON_otj(int ini,MYSQL_ROW row,double oscore,int omms){
     sprintf(buffer,"%s:%s",row[5],row[0]);
     cJSON_AddStringToObject(root,"oposition",buffer);
     cJSON_AddStringToObject(root,"ostrand",row[2]);
-    cJSON_AddStringToObject(root,"oregion","IDontKnow");
+    cJSON_AddStringToObject(root,"oregion",region_info[getRegion(atoi(row[6]),atoi(row[7]),atoi(row[0]),atoi(row[1]))]);
     return root;
 }
 
@@ -114,14 +120,23 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
     int i;
     char buffer[9182];
 
-    //MYSQL_ROW row :  0:sgrna_start, 1:sgrna_end, 2:sgrna_strand, 3:sgrna_seq, 4:sgrna_PAM, 5:Chr_Name, 6:sgrna_ID
+    //MYSQL_ROW row :  0:sgrna_start, 1:sgrna_end, 2:sgrna_strand, 3:sgrna_seq, 4:sgrna_PAM, 5:Chr_Name, 6:sgrna_ID, 7:Chr_No
     in_site[ini].index=atoi(row[0]);
     in_site[ini].strand=row[2][0];
     strcpy(in_site[ini].nt,row[3]);
     strcpy(in_site[ini].pam,row[4]);
     in_site[ini].ot.clear();
+    strcpy(in_site[ini].chromosome,row[5]);
+    in_site[ini].region=getRegion(atoi(row[6]),atoi(row[7]),atoi(row[0]),atoi(row[1]));
 
     return_struct rs;
+    if(check_region(ini)==0){
+        rs.dou[0]=-1.0;
+        rs.dou[1]=0.0;
+        rs.dou[2]=0.0;
+        //dc_put(0,ini);
+        return ;
+    }
     if(check_rfc(ini)==0){
         rs.dou[0]=-1.0;
         rs.dou[1]=0.0;

@@ -129,20 +129,20 @@ cJSON *getlineregion(int Chr_No,int start,int end){
     return root;
 }
 
-int getRegion(int sgrna_ID){
+int getRegion(int sgrna_ID,int Chr_No,int sgrna_start,int sgrna_end){
     char buffer[1000];
-    sprintf(buffer,"SELECT region_ID FROM Table_sgRNA WHERE sgrna_ID=%d; ",sgrna_ID);
+    sprintf(buffer,"SELECT rtd_id FROM Table_sgRNA WHERE sgrna_ID=%d; ",sgrna_ID);
     int res=mysql_query(my_conn,buffer);
     if(res){
     }
     MYSQL_RES *result=mysql_store_result(my_conn);
     MYSQL_ROW sql_row;
     if((sql_row=mysql_fetch_row(result))){
-        if(sql_row[0][0]!='N' && sql_row[0][0]!='n'){
+        if(sql_row[0]!=NULL && sql_row[0][0]!='N' && sql_row[0][0]!='n'){
             return atoi(sql_row[0]);
         }
     }
-    // Pre: get sgRNA info
+    /* / Pre: get sgRNA info
     sprintf(buffer,"SELECT sgrna_start, sgrna_end FROM Table_sgRNA WHERE sgrna_ID=%d; ",sgrna_ID);
     mysql_query(my_conn,buffer);
     result=mysql_store_result(my_conn);
@@ -150,11 +150,43 @@ int getRegion(int sgrna_ID){
     if((sql_row=mysql_fetch_row(result))){
         start=atoi(sql_row[0]);
         end=atoi(sql_row[1]);
-    }
+    }*/
 
     //First: find if in gene
-    sprintf(buffer,"SELECT * FROM Table_gene WHERE Chr_No=%d and gene_start<=%d and gene_end>=%d",Chr_No,);
-    //
-    //
-    //
+    sprintf(buffer,"SELECT gene_Start, gene_end, gene_UTRstart, gene_UTRend FROM Table_gene WHERE Chr_No=%d and gene_start<=%d and gene_end>=%d",Chr_No,sgrna_start,sgrna_end);
+    mysql_query(my_conn,buffer);
+    result=mysql_store_result(my_conn);
+    if((sql_row=mysql_fetch_row(result))){
+        int start=atoi(sql_row[0]),end=atoi(sql_row[1]);
+        int utrstart=atoi(sql_row[0]),utrend=atoi(sql_row[1]);
+        if(sql_row[2][0]!='N') utrstart+=atoi(sql_row[2])-1;
+        if(sql_row[3][0]!='N') utrend-=atoi(sql_row[3])+1+3;
+        if((start<=sgrna_start && utrstart>=sgrna_end) || (utrend<=sgrna_start && end>=sgrna_end)){
+            int type=REGION_UTR;
+            sprintf(buffer,"UPDATE Table_sgRNA SET rtd_id=%d WHERE sgrna_ID=%d",type,sgrna_ID);
+            mysql_query(my_conn,buffer);
+            return type;
+        }
+    }else{
+        int type=REGION_INTERGENIC;
+        sprintf(buffer,"UPDATE Table_sgRNA SET rtd_id=%d WHERE sgrna_ID=%d",type,sgrna_ID);
+        mysql_query(my_conn,buffer);
+        return type;
+    }
+
+    //Secondly: find if in exon
+    sprintf(buffer,"SELECT region_ID FROM Table_region as r join Table_gene as g WHERE r.gene_ID=g.gene_ID and rtd_id=1 and Chr_No=%d and region_start<=%d and region_end>=%d",Chr_No,sgrna_start,sgrna_end);
+    mysql_query(my_conn,buffer);
+    result=mysql_store_result(my_conn);
+    if((sql_row=mysql_fetch_row(result))){
+        int type=REGION_EXON;
+        sprintf(buffer,"UPDATE Table_sgRNA SET rtd_id=%d WHERE sgrna_ID=%d",type,sgrna_ID);
+        mysql_query(my_conn,buffer);
+        return type;
+    }else{
+        int type=REGION_INTRON;
+        sprintf(buffer,"UPDATE Table_sgRNA SET rtd_id=%d WHERE sgrna_ID=%d",type,sgrna_ID);
+        mysql_query(my_conn,buffer);
+        return type;
+    }
 }
