@@ -40,6 +40,11 @@ typedef struct site{
     cJSON *otj;
 }site;
 
+typedef struct localrow{
+    MYSQL_ROW *row;
+    struct localrow *next;
+}localrow;
+
 typedef struct restrict{
     char rfc10;
     char rfc12,rfc12a;
@@ -70,7 +75,7 @@ int readLine(FILE *);
 cJSON *Create_array_of_anything(cJSON **objects,int num);
 
 double subscore(int,int,int*,int);
-void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1);
+void score(MYSQL_RES *result,MYSQL_ROW row,int ini,int type,double r1);
 
 char *NomoreSpace(char *str);
 char *_NomoreSpace(char *str);

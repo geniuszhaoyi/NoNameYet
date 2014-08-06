@@ -110,40 +110,14 @@ double subscore(int ini,MYSQL_ROW row,int *Nph,int type){
     return smm;
 }
 
-void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
+void score(MYSQL_RES *result,MYSQL_ROW row,int ini,int type,double r1){
     double r2=1.0-r1;
-    int ini=*pini;
     int Sgc=0,S20=0;
     int Nph=0;
     double sum=0;
     int gc=0;
     int i;
     char buffer[9182];
-
-    //MYSQL_ROW row :  0:sgrna_start, 1:sgrna_end, 2:sgrna_strand, 3:sgrna_seq, 4:sgrna_PAM, 5:Chr_Name, 6:sgrna_ID, 7:Chr_No
-    in_site[ini].index=atoi(row[0]);
-    in_site[ini].strand=row[2][0];
-    strcpy(in_site[ini].nt,row[3]);
-    strcpy(in_site[ini].pam,row[4]);
-    in_site[ini].ot.clear();
-    strcpy(in_site[ini].chromosome,row[5]);
-    in_site[ini].region=getRegion(atoi(row[6]),atoi(row[7]),atoi(row[0]),atoi(row[1]));
-
-    return_struct rs;
-    if(check_region(ini)==0){
-        rs.dou[0]=-1.0;
-        rs.dou[1]=0.0;
-        rs.dou[2]=0.0;
-        //dc_put(0,ini);
-        return ;
-    }
-    if(check_rfc(ini)==0){
-        rs.dou[0]=-1.0;
-        rs.dou[1]=0.0;
-        rs.dou[2]=0.0;
-        //dc_put(0,ini);
-        return ;
-    }
 
     sprintf(buffer,"SELECT sgrna_Sspe, sgrna_Seff, sgrna_count, sgrna_offtarget FROM Table_sgRNA WHERE sgrna_ID=%s and sgrna_offtarget IS NOT NULL",row[6]);
     int res=mysql_query(my_conn,buffer);
@@ -181,21 +155,18 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
         in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
         in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
-        (*pini)++;
         rs.dou[0]=0.0;
     }else if(type==1){
         in_site[ini].Sspe_nor=rs.dou[1]=max(100-sum,0.0);
         in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
         in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
-        (*pini)++;
     }else{
         sum=sum-Sgc-S20+7;
         in_site[ini].Sspe_nor=rs.dou[1]=sum;
         in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
         in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
-        (*pini)++;
     }
 
     int len=in_site[ini].ot.size();
@@ -210,3 +181,4 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int *pini,int type,double r1){
     }
     in_site[ini].otj=otj;
 }
+

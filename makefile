@@ -1,7 +1,7 @@
 cc = g++
 obj = main.o score.o cJSON.o region.o
 main = ../main
-x= -I/usr/include/mysql -L/usr/lib -lmysqlclient
+x= -I/usr/include/mysql -L/usr/lib -lmysqlclient -pthread
 
 all: $(obj)
 	$(cc) -o $(main) $(obj) $(x) -o ../main
