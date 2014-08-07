@@ -162,10 +162,13 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"r1\":0,\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001134-chromosome2:200..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"r1\":0,\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001134-chromosome2:200..1000\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 localrow *localresult;
+
+pthread_mutex_t mutex;
+pthread_mutex_t mutex_mysql_conn;
 
 int main(int args,char *argv[]){
     int i;
@@ -188,6 +191,9 @@ int main(int args,char *argv[]){
     req_restrict.region[4]=1;
 
     localresult=NULL;
+
+    pthread_mutex_init(&mutex,NULL);
+    pthread_mutex_init(&mutex_mysql_conn,NULL);
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
@@ -259,7 +265,7 @@ int main(int args,char *argv[]){
 
     MYSQL_ROW sql_row;
     my_conn=mysql_init(NULL);
-    if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","db",3306,NULL,0)){
+    if(mysql_real_connect(my_conn,"127.0.0.1","root","root","CasDB",3306,NULL,0)){
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
@@ -274,8 +280,8 @@ int main(int args,char *argv[]){
         return 0;
     }
     MYSQL_RES *result_t=mysql_store_result(my_conn);
-    printf("%d:",make_mysqlres_local(&localresult,result_t));
-    printf("%d\n",localres_count(localresult));
+    make_mysqlres_local(&localresult,result_t);
+    localres_count(localresult);
     mysql_free_result(result_t);
 
     sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
@@ -293,7 +299,9 @@ int main(int args,char *argv[]){
         strcpy(in_site[ini].pam,sql_row[4]);
         in_site[ini].ot.clear();
         strcpy(in_site[ini].chromosome,sql_row[5]);
+        pthread_mutex_lock(&mutex_mysql_conn);
         in_site[ini].region=getRegion(atoi(sql_row[6]),atoi(sql_row[7]),atoi(sql_row[0]),atoi(sql_row[1]));
+        pthread_mutex_unlock(&mutex_mysql_conn);
 
         if(check_region(ini)==0){
             continue;
@@ -302,10 +310,37 @@ int main(int args,char *argv[]){
             continue;
         }
 
-        score(localresult,sql_row,ini,req_type,req_r1);
-
+        localrow lr;
+        for(int i=0;i<8;i++){
+            strcpy(lr.row[i],sql_row[i]);
+        }
+        
+        sprintf(buffer,"SELECT sgrna_Sspe, sgrna_Seff, sgrna_count, sgrna_offtarget FROM Table_sgRNA WHERE sgrna_ID=%s and sgrna_offtarget IS NOT NULL",lr.row[6]);
+        pthread_mutex_lock(&mutex_mysql_conn);
+        int res=mysql_query(my_conn,buffer);
+        if(res){
+            printf("%s\n",mysql_error(my_conn));
+        }
+        MYSQL_RES *rsdc=mysql_store_result(my_conn);
+        pthread_mutex_unlock(&mutex_mysql_conn);
+        if((sql_row=mysql_fetch_row(rsdc))){
+            sscanf(sql_row[0],"%lf",&in_site[ini].Sspe_nor);
+            sscanf(sql_row[1],"%lf",&in_site[ini].Seff_nor);
+            in_site[ini].score=req_r1*in_site[ini].Sspe_nor+(1-req_r1)*in_site[ini].Seff_nor;
+            sscanf(sql_row[2],"%d",&in_site[ini].count);
+            in_site[ini].otj=cJSON_Parse(sql_row[3]);
+        }else{
+            create_thread_socre(localresult,lr,ini,req_type,req_r1);
+        }
+        
         ini++;
     }
+
+    for(i=0;i<ini;i++){
+        void *status;
+        pthread_join(in_site[i].ntid,&status);
+    }
+    free_mysqlres_local(localresult);
 
     sort(in_site,in_site+ini,cmp_in_site);  // Sort & Output
 

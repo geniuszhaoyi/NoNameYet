@@ -9,6 +9,7 @@ using namespace std;
 
 #include "cJSON/cJSON.h"
 #include "mysql.h"
+#include <pthread.h>
 
 #define PTT_SARS 0
 #define PTT_ECOLI 1
@@ -40,6 +41,7 @@ typedef struct site{
     double score,Sspe_nor,Seff_nor;
     vector <cJSON*> ot;
     cJSON *otj;
+    pthread_t ntid;
 }site;
 
 typedef struct localrow{
@@ -64,6 +66,9 @@ struct return_struct{
     double dou[3];
 };
 
+extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutex_mysql_conn;
+
 extern restrict req_restrict;
 
 extern int ini;
@@ -77,8 +82,7 @@ extern MYSQL *my_conn;
 int readLine(FILE *);
 cJSON *Create_array_of_anything(cJSON **objects,int num);
 
-double subscore(int ini,localrow *lr,int *Nph,int type);
-void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1);
+void create_thread_socre(localrow *lr,localrow row,int ini,int type,double r1);
 
 char *NomoreSpace(char *str);
 char *_NomoreSpace(char *str);

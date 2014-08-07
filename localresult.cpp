@@ -1,7 +1,7 @@
 #include "main.h"
 
 int make_mysqlres_local(localrow **localresult,MYSQL_RES *result_t){
-    int i=0;
+    int count=0;
     localrow **p=localresult;
     mysql_data_seek(result_t,0);
     MYSQL_ROW sql_row;
@@ -11,10 +11,10 @@ int make_mysqlres_local(localrow **localresult,MYSQL_RES *result_t){
             strcpy((*p)->row[i],sql_row[i]);
         }
         p=&((*p)->next);
-        i++;
+        count++;
     }
     *p=NULL;
-    return i;
+    return count;
 }
 
 void free_mysqlres_local(localrow *localresult){

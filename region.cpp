@@ -142,15 +142,6 @@ int getRegion(int sgrna_ID,int Chr_No,int sgrna_start,int sgrna_end){
             return atoi(sql_row[0]);
         }
     }
-    /* / Pre: get sgRNA info
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end FROM Table_sgRNA WHERE sgrna_ID=%d; ",sgrna_ID);
-    mysql_query(my_conn,buffer);
-    result=mysql_store_result(my_conn);
-    int start=0,end=0;
-    if((sql_row=mysql_fetch_row(result))){
-        start=atoi(sql_row[0]);
-        end=atoi(sql_row[1]);
-    }*/
 
     //First: find if in gene
     sprintf(buffer,"SELECT gene_Start, gene_end, gene_UTRstart, gene_UTRend FROM Table_gene WHERE Chr_No=%d and gene_start<=%d and gene_end>=%d",Chr_No,sgrna_start,sgrna_end);

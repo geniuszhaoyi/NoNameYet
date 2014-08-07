@@ -20,7 +20,9 @@ cJSON *cJSON_otj(int ini,localrow *lr,double oscore,int omms){
     sprintf(buffer,"%s:%s",lr->row[5],lr->row[0]);
     cJSON_AddStringToObject(root,"oposition",buffer);
     cJSON_AddStringToObject(root,"ostrand",lr->row[2]);
+    pthread_mutex_lock(&mutex_mysql_conn);
     cJSON_AddStringToObject(root,"oregion",region_info[getRegion(atoi(lr->row[6]),atoi(lr->row[7]),atoi(lr->row[0]),atoi(lr->row[1]))]);
+    pthread_mutex_unlock(&mutex_mysql_conn);
     return root;
 }
 
@@ -54,7 +56,7 @@ double subscore(int ini,localrow *lr,int *Nph,int type){
     return smm;
 }
 
-void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1){
+void score(localrow *lr,localrow row,int ini,int type,double r1){
     double r2=1.0-r1;
     int Sgc=0,S20=0;
     int Nph=0;
@@ -63,28 +65,15 @@ void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1){
     int i;
     char buffer[9182];
 
-    sprintf(buffer,"SELECT sgrna_Sspe, sgrna_Seff, sgrna_count, sgrna_offtarget FROM Table_sgRNA WHERE sgrna_ID=%s and sgrna_offtarget IS NOT NULL",row[6]);
-    int res=mysql_query(my_conn,buffer);
-    if(res){
-    }
-    MYSQL_RES *rsdc=mysql_store_result(my_conn);
-    MYSQL_ROW sql_row;
-    if((sql_row=mysql_fetch_row(rsdc))){
-        sscanf(sql_row[0],"%lf",&in_site[ini].Sspe_nor);
-        sscanf(sql_row[1],"%lf",&in_site[ini].Seff_nor);
-        in_site[ini].score=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
-        sscanf(sql_row[2],"%d",&in_site[ini].count);
-        in_site[ini].otj=cJSON_Parse(sql_row[3]);
-        return ;
-    }
-
+    pthread_mutex_unlock(&mutex);
     for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=65;
     else if((double)gc/(double)LEN>0.5 && (double)gc/(double)LEN<0.7) Sgc=0;
     else Sgc=35;
     if(in_site[ini].nt[19]!='G') S20=35;
-
+    
     while(lr){
+    //printf("12.1\n");
         int start=atoi(lr->row[0]);
         if(in_site[ini].index!=start){
             double smm=subscore(ini,lr,&Nph,1);
@@ -114,8 +103,10 @@ void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1){
     int len=in_site[ini].ot.size();
     sort(&(in_site[ini].ot[0]),&(in_site[ini].ot[0])+len,cmp);
     cJSON *otj=Create_array_of_anything(&(in_site[ini].ot[0]),min(20,len));
-    sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row[6]);
-    res=mysql_query(my_conn,buffer);
+    sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
+    pthread_mutex_lock(&mutex_mysql_conn);
+    int res=mysql_query(my_conn,buffer);
+    pthread_mutex_unlock(&mutex_mysql_conn);
     if(res){
         printf("%s\n\n",buffer);
         printf("%s\n",mysql_error(my_conn));
@@ -124,3 +115,32 @@ void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1){
     in_site[ini].otj=otj;
 }
 
+struct thread_share_variables{
+    localrow *lr;
+    localrow row;
+    int ini;
+    int type;
+    double r1;
+}thread_share_variables;
+
+void *new_thread(void *args){
+    score(thread_share_variables.lr,thread_share_variables.row,thread_share_variables.ini,thread_share_variables.type,thread_share_variables.r1);
+    return NULL;
+}
+
+void create_thread_socre(localrow *lr,localrow row,int ini,int type,double r1){
+    pthread_t ntid;
+    pthread_mutex_lock(&mutex);
+    thread_share_variables.lr=lr;
+    thread_share_variables.row=row;
+    thread_share_variables.ini=ini;
+    thread_share_variables.type=type;
+    thread_share_variables.r1=r1;
+
+    int err=pthread_create(&ntid, NULL, new_thread, NULL);
+    if(err){
+        return ;
+    }
+
+    in_site[ini].ntid=ntid;
+}
