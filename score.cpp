@@ -9,85 +9,29 @@ bool cmp(cJSON *a,cJSON *b){
     return as>bs;
 }
 
-int check_region(int i){
-    int r=in_site[i].region;
-    return req_restrict.region[r];
-}
-
-int check_rfc(int i){
-    char str[LEN+PAM_LEN+3];
-    strcpy(str,in_site[i].nt);
-    strcat(str,in_site[i].pam);
-    if(req_restrict.rfc10){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    if(req_restrict.rfc12){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"GCTAGC")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    if(req_restrict.rfc12a){
-        if(strstr(str,"CAGCTG")) return 0;
-        if(strstr(str,"CTCGAG")) return 0;
-        if(strstr(str,"CCTAGG")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"GCTCTTC")) return 0;
-        if(strstr(str,"GAAGAGC")) return 0;
-    }
-    if(req_restrict.rfc21){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"AGATCT")) return 0;
-        if(strstr(str,"GGATCC")) return 0;
-        if(strstr(str,"CTCGAG")) return 0;
-    }
-    if(req_restrict.rfc23){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    if(req_restrict.rfc25){
-        if(strstr(str,"GAATTC")) return 0;
-        if(strstr(str,"TCTAGA")) return 0;
-        if(strstr(str,"GCCGGC")) return 0;
-        if(strstr(str,"ACCGGT")) return 0;
-        if(strstr(str,"ACTAGT")) return 0;
-        if(strstr(str,"CTGCAG")) return 0;
-        if(strstr(str,"GCGGCCGC")) return 0;
-    }
-    return 1;
-}
-
 //MYSQL_ROW row :  0:sgrna_start, 1:sgrna_end, 2:sgrna_strand, 3:sgrna_seq, 4:sgrna_PAM, 5:Chr_Name, 6:sgrna_ID, 7:Chr_No
-cJSON *cJSON_otj(int ini,MYSQL_ROW row,double oscore,int omms){
+cJSON *cJSON_otj(int ini,localrow *lr,double oscore,int omms){
     char buffer[4096];
     cJSON *root=cJSON_CreateObject();
-    sprintf(buffer,"%s%s",row[3],row[4]);
+    sprintf(buffer,"%s%s",lr->row[3],lr->row[4]);
     cJSON_AddStringToObject(root,"osequence",buffer);
     cJSON_AddNumberToObject(root,"oscore",oscore);
     cJSON_AddNumberToObject(root,"omms",omms);
-    sprintf(buffer,"%s:%s",row[5],row[0]);
+    sprintf(buffer,"%s:%s",lr->row[5],lr->row[0]);
     cJSON_AddStringToObject(root,"oposition",buffer);
-    cJSON_AddStringToObject(root,"ostrand",row[2]);
-    cJSON_AddStringToObject(root,"oregion",region_info[getRegion(atoi(row[6]),atoi(row[7]),atoi(row[0]),atoi(row[1]))]);
+    cJSON_AddStringToObject(root,"ostrand",lr->row[2]);
+    cJSON_AddStringToObject(root,"oregion",region_info[getRegion(atoi(lr->row[6]),atoi(lr->row[7]),atoi(lr->row[0]),atoi(lr->row[1]))]);
     return root;
 }
 
-double subscore(int ini,MYSQL_ROW row,int *Nph,int type){
+double subscore(int ini,localrow *lr,int *Nph,int type){
     int nmm=0;
     int d0=0;
     double smm=0;
     int nph=0;
     int i;
     for(i=0;i<LEN;i++){
-        if(in_site[ini].nt[i]!=row[3][i]){
+        if(in_site[ini].nt[i]!=lr->row[3][i]){
             smm+=eM[i];
             d0+=i;
             nmm++;
@@ -96,11 +40,11 @@ double subscore(int ini,MYSQL_ROW row,int *Nph,int type){
     if(nmm==0){
         nph++;
         smm=25.0;
-        if(type==1) in_site[ini].ot.push_back(cJSON_otj(ini,row,smm,nmm));
+        if(type==1) in_site[ini].ot.push_back(cJSON_otj(ini,lr,smm,nmm));
     }else{
         if(nmm<=NUM_NO){
             smm=4.0*smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
-            if(type==1) in_site[ini].ot.push_back(cJSON_otj(ini,row,smm,nmm));
+            if(type==1) in_site[ini].ot.push_back(cJSON_otj(ini,lr,smm,nmm));
         }else{
             smm=0.0;
         }
@@ -110,7 +54,7 @@ double subscore(int ini,MYSQL_ROW row,int *Nph,int type){
     return smm;
 }
 
-void score(MYSQL_RES *result,MYSQL_ROW row,int ini,int type,double r1){
+void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1){
     double r2=1.0-r1;
     int Sgc=0,S20=0;
     int Nph=0;
@@ -130,7 +74,6 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int ini,int type,double r1){
         sscanf(sql_row[1],"%lf",&in_site[ini].Seff_nor);
         in_site[ini].score=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         sscanf(sql_row[2],"%d",&in_site[ini].count);
-        (*pini)++;
         in_site[ini].otj=cJSON_Parse(sql_row[3]);
         return ;
     }
@@ -141,31 +84,30 @@ void score(MYSQL_RES *result,MYSQL_ROW row,int ini,int type,double r1){
     else Sgc=35;
     if(in_site[ini].nt[19]!='G') S20=35;
 
-    mysql_data_seek(result,0);
-    while((sql_row=mysql_fetch_row(result))){
-        int start=atoi(sql_row[0]);
-        if(in_site[ini].index==start) continue;
-        double smm=subscore(ini,sql_row,&Nph,1);
-        sum+=smm;
+    while(lr){
+        int start=atoi(lr->row[0]);
+        if(in_site[ini].index!=start){
+            double smm=subscore(ini,lr,&Nph,1);
+            sum+=smm;
+        }
+        lr=lr->next;
     }
-
     //sum=sigma+S1
     if(type==1 && Nph>3){
-        in_site[ini].Sspe_nor=rs.dou[1]=max(100-sum,0.0);
-        in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
-        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
+        in_site[ini].Sspe_nor=max(100-sum,0.0);
+        in_site[ini].Seff_nor=100-Sgc-S20;
+        in_site[ini].score=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
-        rs.dou[0]=0.0;
     }else if(type==1){
-        in_site[ini].Sspe_nor=rs.dou[1]=max(100-sum,0.0);
-        in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
-        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
+        in_site[ini].Sspe_nor=max(100-sum,0.0);
+        in_site[ini].Seff_nor=100-Sgc-S20;
+        in_site[ini].score=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
     }else{
         sum=sum-Sgc-S20+7;
-        in_site[ini].Sspe_nor=rs.dou[1]=sum;
-        in_site[ini].Seff_nor=rs.dou[2]=100-Sgc-S20;
-        in_site[ini].score=rs.dou[0]=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
+        in_site[ini].Sspe_nor=sum;
+        in_site[ini].Seff_nor=100-Sgc-S20;
+        in_site[ini].score=r1*in_site[ini].Sspe_nor+r2*in_site[ini].Seff_nor;
         in_site[ini].count=in_site[ini].ot.size();
     }
 

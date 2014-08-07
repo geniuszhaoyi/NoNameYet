@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
 #include <algorithm>
 #include <vector>
@@ -26,6 +27,7 @@ using namespace std;
 #define GENE_LEN 8000000
 #define DCFILE_LEN 8000000
 #define NODE_SIZE 1000000
+#define LOCALROW_LEN 120
 
 typedef struct site{
     char nt[LEN+1];
@@ -41,7 +43,8 @@ typedef struct site{
 }site;
 
 typedef struct localrow{
-    MYSQL_ROW *row;
+// sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No
+    char row[8][LOCALROW_LEN];
     struct localrow *next;
 }localrow;
 
@@ -51,7 +54,7 @@ typedef struct restrict{
     char rfc21;
     char rfc23;
     char rfc25;
-    char region[4+1];
+    char region[5+1];
 }restrict;
 
 struct return_struct{
@@ -74,8 +77,8 @@ extern MYSQL *my_conn;
 int readLine(FILE *);
 cJSON *Create_array_of_anything(cJSON **objects,int num);
 
-double subscore(int,int,int*,int);
-void score(MYSQL_RES *result,MYSQL_ROW row,int ini,int type,double r1);
+double subscore(int ini,localrow *lr,int *Nph,int type);
+void score(localrow *lr,MYSQL_ROW row,int ini,int type,double r1);
 
 char *NomoreSpace(char *str);
 char *_NomoreSpace(char *str);
@@ -83,3 +86,7 @@ char *_NomoreSpace(char *str);
 int get_Chr_No(const char*,const char*);
 cJSON *getlineregion(int,int,int);
 int getRegion(int sgrna_ID,int Chr_No,int sgrna_start,int sgrna_end);
+
+int make_mysqlres_local(localrow **localresult,MYSQL_RES *result_t);
+void free_mysqlres_local(localrow *localresult);
+int localres_count(localrow *lr);

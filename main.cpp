@@ -33,6 +33,62 @@ cJSON *Create_array_of_anything(cJSON **objects,int num)
 	return root;
 }
 
+int check_region(int i){
+    int r=in_site[i].region;
+    return req_restrict.region[r];
+}
+
+int check_rfc(int i){
+    char str[LEN+PAM_LEN+3];
+    strcpy(str,in_site[i].nt);
+    strcat(str,in_site[i].pam);
+    if(req_restrict.rfc10){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    if(req_restrict.rfc12){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"GCTAGC")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    if(req_restrict.rfc12a){
+        if(strstr(str,"CAGCTG")) return 0;
+        if(strstr(str,"CTCGAG")) return 0;
+        if(strstr(str,"CCTAGG")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"GCTCTTC")) return 0;
+        if(strstr(str,"GAAGAGC")) return 0;
+    }
+    if(req_restrict.rfc21){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"AGATCT")) return 0;
+        if(strstr(str,"GGATCC")) return 0;
+        if(strstr(str,"CTCGAG")) return 0;
+    }
+    if(req_restrict.rfc23){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    if(req_restrict.rfc25){
+        if(strstr(str,"GAATTC")) return 0;
+        if(strstr(str,"TCTAGA")) return 0;
+        if(strstr(str,"GCCGGC")) return 0;
+        if(strstr(str,"ACCGGT")) return 0;
+        if(strstr(str,"ACTAGT")) return 0;
+        if(strstr(str,"CTGCAG")) return 0;
+        if(strstr(str,"GCGGCCGC")) return 0;
+    }
+    return 1;
+}
+
 //R=A,G; M=A,C; W=A,T; S=C,G; K=G,T; Y=C,T; H=A,C,T; V=A,C,G; B=C,G,T; D=A,G,T; N=A,G,C,T
 int check_pam(const char *str,const char *pam){
     for(;*pam;pam++,str++){
@@ -106,8 +162,10 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"r1\":0,\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001134-chromosome2:200..2873\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"r1\":0,\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001134-chromosome2:200..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
+
+localrow *localresult;
 
 int main(int args,char *argv[]){
     int i;
@@ -127,6 +185,9 @@ int main(int args,char *argv[]){
     req_restrict.region[1]=1;
     req_restrict.region[2]=1;
     req_restrict.region[3]=1;
+    req_restrict.region[4]=1;
+
+    localresult=NULL;
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
@@ -156,7 +217,6 @@ int main(int args,char *argv[]){
     cJSON_temp=cJSON_GetObjectItem(request,"r1");
     if(cJSON_temp){
         req_r1=cJSON_GetObjectItem(request,"r1")->valuedouble;
-        printf("%f,",req_r1);
     }
 
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
@@ -175,10 +235,10 @@ int main(int args,char *argv[]){
 
     cJSON_temp=cJSON_GetObjectItem(request,"region");
     if(cJSON_temp){
-        req_restrict.region[0]=(cJSON_temp->valuestring)[0]-48;
-        req_restrict.region[1]=(cJSON_temp->valuestring)[1]-48;
-        req_restrict.region[2]=(cJSON_temp->valuestring)[2]-48;
-        req_restrict.region[3]=(cJSON_temp->valuestring)[3]-48;
+        req_restrict.region[1]=(cJSON_temp->valuestring)[0]-48;
+        req_restrict.region[2]=(cJSON_temp->valuestring)[1]-48;
+        req_restrict.region[3]=(cJSON_temp->valuestring)[2]-48;
+        req_restrict.region[4]=(cJSON_temp->valuestring)[3]-48;
     }
 
     char req_rfc[10];
@@ -199,7 +259,7 @@ int main(int args,char *argv[]){
 
     MYSQL_ROW sql_row;
     my_conn=mysql_init(NULL);
-    if(mysql_real_connect(my_conn,"127.0.0.1","root","root","CasDB",3306,NULL,0)){
+    if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","db",3306,NULL,0)){
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
@@ -214,8 +274,9 @@ int main(int args,char *argv[]){
         return 0;
     }
     MYSQL_RES *result_t=mysql_store_result(my_conn);
-    
-    
+    printf("%d:",make_mysqlres_local(&localresult,result_t));
+    printf("%d\n",localres_count(localresult));
+    mysql_free_result(result_t);
 
     sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
     res=mysql_query(my_conn,buffer);
@@ -233,22 +294,16 @@ int main(int args,char *argv[]){
         in_site[ini].ot.clear();
         strcpy(in_site[ini].chromosome,sql_row[5]);
         in_site[ini].region=getRegion(atoi(sql_row[6]),atoi(sql_row[7]),atoi(sql_row[0]),atoi(sql_row[1]));
-        
+
         if(check_region(ini)==0){
-            rs.dou[0]=-1.0;
-            rs.dou[1]=0.0;
-            rs.dou[2]=0.0;
             continue;
         }
         if(check_rfc(ini)==0){
-            rs.dou[0]=-1.0;
-            rs.dou[1]=0.0;
-            rs.dou[2]=0.0;
             continue;
         }
-        
-        score(result_t,sql_row,ini,req_type,req_r1);
-        
+
+        score(localresult,sql_row,ini,req_type,req_r1);
+
         ini++;
     }
 
@@ -291,6 +346,7 @@ int main(int args,char *argv[]){
 
 #ifdef  _WIN32
     fprintf(fopen("D:/out.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
+    //printf("%d\n",strlen(NomoreSpace(argv[0])));
 #endif // _WIN32
 #ifdef  __linux
     printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
@@ -298,7 +354,6 @@ int main(int args,char *argv[]){
 
     free(argv[0]);
     mysql_free_result(result);
-    mysql_free_result(result_t);
     mysql_close(my_conn);
 
     return 0;
