@@ -4,7 +4,7 @@
 restrict req_restrict;
 
 int ini;
-site in_site[1000000];
+site in_site[NODE_SIZE];
 
 MYSQL *my_conn;
 
@@ -162,13 +162,14 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"r1\":0,\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001134-chromosome2:200..1000\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001144-chromosome12:1001..3500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 localrow *localresult;
 
 pthread_mutex_t mutex;
 pthread_mutex_t mutex_mysql_conn;
+sem_t sem_thread;
 
 int main(int args,char *argv[]){
     int i;
@@ -194,6 +195,7 @@ int main(int args,char *argv[]){
 
     pthread_mutex_init(&mutex,NULL);
     pthread_mutex_init(&mutex_mysql_conn,NULL);
+    sem_init(&sem_thread,0,80);
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
@@ -265,7 +267,10 @@ int main(int args,char *argv[]){
 
     MYSQL_ROW sql_row;
     my_conn=mysql_init(NULL);
-    if(mysql_real_connect(my_conn,"127.0.0.1","root","root","CasDB",3306,NULL,0)){
+
+    my_bool mb=false;
+    mysql_options(my_conn,MYSQL_SECURE_AUTH,&mb);
+    if(mysql_real_connect(my_conn,"127.0.0.1","igem","uestc2014!","CasDB",3306,NULL,0)){
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
@@ -273,7 +278,7 @@ int main(int args,char *argv[]){
     }
 
     int res;
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s';",req_specie,req_pam);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and pam_PAM='%s';",req_specie,req_pam);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error2");
@@ -284,7 +289,7 @@ int main(int args,char *argv[]){
     localres_count(localresult);
     mysql_free_result(result_t);
 
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and sgrna_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and pam_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
@@ -330,6 +335,7 @@ int main(int args,char *argv[]){
             sscanf(sql_row[2],"%d",&in_site[ini].count);
             in_site[ini].otj=cJSON_Parse(sql_row[3]);
         }else{
+            sem_wait(&sem_thread);
             create_thread_socre(localresult,lr,ini,req_type,req_r1);
         }
         
@@ -337,8 +343,7 @@ int main(int args,char *argv[]){
     }
 
     for(i=0;i<ini;i++){
-        void *status;
-        pthread_join(in_site[i].ntid,&status);
+        if(in_site[i].ntid) pthread_join(in_site[i].ntid,NULL);
     }
     free_mysqlres_local(localresult);
 
@@ -356,7 +361,7 @@ int main(int args,char *argv[]){
 
     vector<cJSON*> list;
     list.clear();
-    for(i=0;i<ini;i++){
+    for(i=0;i<ini && i<50;i++){
         cJSON *ans=cJSON_CreateObject();
         sprintf(buffer,"#%d",i+1);
         cJSON_AddStringToObject(ans,"key",buffer);
@@ -384,6 +389,7 @@ int main(int args,char *argv[]){
     //printf("%d\n",strlen(NomoreSpace(argv[0])));
 #endif // _WIN32
 #ifdef  __linux
+    //printf("{\"status\":1,\"message\":\"System in maintenance\"}");
     printf("%s\n",NomoreSpace(argv[0]=cJSON_Print(root)));
 #endif // __linux
 

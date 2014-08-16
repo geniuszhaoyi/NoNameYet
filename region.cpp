@@ -85,26 +85,26 @@ cJSON *getlineregion(int Chr_No,int start,int end){
             if(ns[i].s<mark_gene){
                 cJSON *n=cJSON_CreateObject();
                 cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
-                cJSON_AddStringToObject(n,"description","intron");
+                cJSON_AddStringToObject(n,"description","INTRON");
                 cJSON_AddItemToArray(root,n);
             }else{
                 cJSON *n=cJSON_CreateObject();
                 cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
-                cJSON_AddStringToObject(n,"description","intergenic");
+                cJSON_AddStringToObject(n,"description","INTERGENIC");
                 cJSON_AddItemToArray(root,n);
             }
         }
         if(ns[i].type==REGION_UTR){
             cJSON *n=cJSON_CreateObject();
             cJSON_AddNumberToObject(n,"endpoint",ns[i].t);
-            cJSON_AddStringToObject(n,"description","utr");
+            cJSON_AddStringToObject(n,"description","UTR");
             cJSON_AddItemToArray(root,n);
             last=ns[i].t;
         }
         if(ns[i].type==REGION_EXON){
             cJSON *n=cJSON_CreateObject();
             cJSON_AddNumberToObject(n,"endpoint",ns[i].t);
-            cJSON_AddStringToObject(n,"description","exon");
+            cJSON_AddStringToObject(n,"description","EXON");
             cJSON_AddItemToArray(root,n);
             last=ns[i].t;
         }
@@ -116,12 +116,12 @@ cJSON *getlineregion(int Chr_No,int start,int end){
         if(end<mark_gene){
             cJSON *n=cJSON_CreateObject();
             cJSON_AddNumberToObject(n,"endpoint",end);
-            cJSON_AddStringToObject(n,"description","intron");
+            cJSON_AddStringToObject(n,"description","INTRON");
             cJSON_AddItemToArray(root,n);
         }else{
             cJSON *n=cJSON_CreateObject();
             cJSON_AddNumberToObject(n,"endpoint",end);
-            cJSON_AddStringToObject(n,"description","intergenic");
+            cJSON_AddStringToObject(n,"description","INTERGENIC");
             cJSON_AddItemToArray(root,n);
         }
     }

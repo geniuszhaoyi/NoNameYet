@@ -1,10 +1,10 @@
 cc = g++
 obj = main.o score.o cJSON.o region.o localresult.o
 main = ../main
-x= -I/usr/include/mysql -L/usr/lib -lmysqlclient -pthread
-
+x= -I/home/hj/immunet/www/iGEM2014/mysql-connector/include
+y= -L/home/hj/immunet/www/iGEM2014/mysql-connector/lib -Wl,-dn -lmysqlclient -Wl,-dy -lm -lz -lcrypt -lpthread -ldl -lrt
 all: $(obj)
-	$(cc) -o $(main) $(obj) $(x)
+	$(cc) -o $(main) $(obj) $(y)
 
 cJSON.o : cJSON/cJSON.c cJSON/cJSON.h
 	$(cc) -c cJSON/cJSON.c $(x)

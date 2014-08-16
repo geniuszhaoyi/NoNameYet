@@ -15,7 +15,8 @@ cJSON *cJSON_otj(int ini,localrow *lr,double oscore,int omms){
     cJSON *root=cJSON_CreateObject();
     sprintf(buffer,"%s%s",lr->row[3],lr->row[4]);
     cJSON_AddStringToObject(root,"osequence",buffer);
-    cJSON_AddNumberToObject(root,"oscore",oscore);
+    sprintf(buffer,"%.2f",oscore);
+    cJSON_AddStringToObject(root,"oscore",buffer);
     cJSON_AddNumberToObject(root,"omms",omms);
     sprintf(buffer,"%s:%s",lr->row[5],lr->row[0]);
     cJSON_AddStringToObject(root,"oposition",buffer);
@@ -113,6 +114,7 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
         system("pause");
     }
     in_site[ini].otj=otj;
+    in_site[ini].ot.clear();
 }
 
 struct thread_share_variables{
@@ -124,7 +126,11 @@ struct thread_share_variables{
 }thread_share_variables;
 
 void *new_thread(void *args){
+    int ini=thread_share_variables.ini;
     score(thread_share_variables.lr,thread_share_variables.row,thread_share_variables.ini,thread_share_variables.type,thread_share_variables.r1);
+    sem_post(&sem_thread);
+    in_site[ini].ntid=0;
+    pthread_detach(pthread_self());
     return NULL;
 }
 
@@ -139,6 +145,9 @@ void create_thread_socre(localrow *lr,localrow row,int ini,int type,double r1){
 
     int err=pthread_create(&ntid, NULL, new_thread, NULL);
     if(err){
+        printf("Pthread_create error: %s\n",strerror(err));
+        pthread_mutex_unlock(&mutex);
+        sem_post(&sem_thread);
         return ;
     }
 

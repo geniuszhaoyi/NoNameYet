@@ -10,6 +10,7 @@ using namespace std;
 #include "cJSON/cJSON.h"
 #include "mysql.h"
 #include <pthread.h>
+#include <semaphore.h>
 
 #define PTT_SARS 0
 #define PTT_ECOLI 1
@@ -68,6 +69,7 @@ struct return_struct{
 
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t mutex_mysql_conn;
+extern sem_t sem_thread;
 
 extern restrict req_restrict;
 
