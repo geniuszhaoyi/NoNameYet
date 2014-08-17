@@ -9,7 +9,7 @@ int nt;
 node ns[NODE_SIZE];
 
 bool cmp2(node a,node b){
-    if(a.s==b.s) return a.type<b.type;
+    if(a.s==b.s) return a.type>b.type;
     return a.s<b.s;
 }
 
@@ -27,6 +27,13 @@ int get_Chr_No(const char *specie,const char *chr_name){
     }
     return -1;
 }
+
+int region_wmin(int a,int b){
+    const int region_cw[]={0,2,3,1,4,0};
+    return region_cw[a]<region_cw[b]?a:b;
+}
+
+int region_str[GENE_LEN];
 
 cJSON *getlineregion(int Chr_No,int start,int end){
     cJSON *root=cJSON_CreateArray();
@@ -48,7 +55,7 @@ cJSON *getlineregion(int Chr_No,int start,int end){
         //new node for gene
         ns[nt].s=start;
         ns[nt].t=end;
-        ns[nt].type=REGION_GENE;
+        ns[nt].type=REGION_INTRON;
         nt++;
         //new node for UTR
         if(start!=utrstart){
@@ -64,7 +71,7 @@ cJSON *getlineregion(int Chr_No,int start,int end){
             nt++;
         }
     }
-    sprintf(buffer,"SELECT gene_Start, gene_end FROM Table_region as r JOIN Table_gene as g where r.gene_ID=g.gene_ID and Chr_No=%d and rtd_id=1 and region_Start<=%d and region_end>=%d;",Chr_No,start,end);
+    sprintf(buffer,"SELECT region_Start, region_end FROM Table_region as r JOIN Table_gene as g where r.gene_ID=g.gene_ID and Chr_No=%d and rtd_id=1 and region_Start<=%d and region_end>=%d;",Chr_No,end,start);
     res=mysql_query(my_conn,buffer);
     if(res) return NULL ;
     result=mysql_store_result(my_conn);
@@ -78,53 +85,25 @@ cJSON *getlineregion(int Chr_No,int start,int end){
 
     sort(ns,ns+nt,cmp2);
 
-    int i;
-    int last=start,mark_gene=-1;
+    int i,j;
+    for(j=0;j<=end-start;j++) region_str[j]=REGION_INTERGENIC;
     for(i=0;i<nt;i++){
-        if(last+1<ns[i].s){
-            if(ns[i].s<mark_gene){
-                cJSON *n=cJSON_CreateObject();
-                cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
-                cJSON_AddStringToObject(n,"description","INTRON");
-                cJSON_AddItemToArray(root,n);
-            }else{
-                cJSON *n=cJSON_CreateObject();
-                cJSON_AddNumberToObject(n,"endpoint",ns[i].s-1);
-                cJSON_AddStringToObject(n,"description","INTERGENIC");
-                cJSON_AddItemToArray(root,n);
-            }
-        }
-        if(ns[i].type==REGION_UTR){
-            cJSON *n=cJSON_CreateObject();
-            cJSON_AddNumberToObject(n,"endpoint",ns[i].t);
-            cJSON_AddStringToObject(n,"description","UTR");
-            cJSON_AddItemToArray(root,n);
-            last=ns[i].t;
-        }
-        if(ns[i].type==REGION_EXON){
-            cJSON *n=cJSON_CreateObject();
-            cJSON_AddNumberToObject(n,"endpoint",ns[i].t);
-            cJSON_AddStringToObject(n,"description","EXON");
-            cJSON_AddItemToArray(root,n);
-            last=ns[i].t;
-        }
-        if(ns[i].type==REGION_GENE){
-            mark_gene=ns[i].t;
+        for(j=ns[i].s;j<=ns[i].t;j++){
+            region_str[j-start]=region_wmin(ns[i].type,region_str[j-start]);
         }
     }
-    if(last<end){
-        if(end<mark_gene){
+    for(j=0;j<=end-start-1;j++){
+        if(region_str[j]!=region_str[j+1]){
             cJSON *n=cJSON_CreateObject();
-            cJSON_AddNumberToObject(n,"endpoint",end);
-            cJSON_AddStringToObject(n,"description","INTRON");
-            cJSON_AddItemToArray(root,n);
-        }else{
-            cJSON *n=cJSON_CreateObject();
-            cJSON_AddNumberToObject(n,"endpoint",end);
-            cJSON_AddStringToObject(n,"description","INTERGENIC");
+            cJSON_AddNumberToObject(n,"endpoint",j+start);
+            cJSON_AddStringToObject(n,"description",region_info[region_str[j]]);
             cJSON_AddItemToArray(root,n);
         }
     }
+    cJSON *n=cJSON_CreateObject();
+    cJSON_AddNumberToObject(n,"endpoint",end);
+    cJSON_AddStringToObject(n,"description",region_info[region_str[end-start]]);
+    cJSON_AddItemToArray(root,n);
 
     return root;
 }

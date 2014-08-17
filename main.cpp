@@ -162,7 +162,7 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001144-chromosome12:1001..3500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001144-chromosome12:1..20000\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 localrow *localresult;
@@ -382,7 +382,7 @@ int main(int args,char *argv[]){
 
         list.push_back(ans);
     }
-    cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
+    //cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
 #ifdef  _WIN32
     fprintf(fopen("D:/out.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));

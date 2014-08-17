@@ -127,7 +127,8 @@ struct thread_share_variables{
 
 void *new_thread(void *args){
     int ini=thread_share_variables.ini;
-    score(thread_share_variables.lr,thread_share_variables.row,thread_share_variables.ini,thread_share_variables.type,thread_share_variables.r1);
+    //score(thread_share_variables.lr,thread_share_variables.row,thread_share_variables.ini,thread_share_variables.type,thread_share_variables.r1);
+  pthread_mutex_unlock(&mutex);
     sem_post(&sem_thread);
     in_site[ini].ntid=0;
     pthread_detach(pthread_self());
