@@ -9,8 +9,8 @@ using namespace std;
 
 #include "cJSON/cJSON.h"
 #include "mysql.h"
-#include <pthread.h>
-#include <semaphore.h>
+
+#include "util.h"
 
 #define PTT_SARS 0
 #define PTT_ECOLI 1
@@ -42,7 +42,7 @@ typedef struct site{
     double score,Sspe_nor,Seff_nor;
     vector <cJSON*> ot;
     cJSON *otj;
-    pthread_t ntid;
+    mos_pthread_t ntid;
 }site;
 
 typedef struct localrow{
@@ -67,9 +67,9 @@ struct return_struct{
     double dou[3];
 };
 
-extern pthread_mutex_t mutex;
-extern pthread_mutex_t mutex_mysql_conn;
-extern sem_t sem_thread;
+extern mos_pthread_mutex_t mutex;
+extern mos_pthread_mutex_t mutex_mysql_conn;
+extern mos_sem_t sem_thread;
 
 extern restrict req_restrict;
 

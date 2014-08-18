@@ -162,14 +162,14 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001144-chromosome12:1..20000\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001144-chromosome12:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 localrow *localresult;
 
-pthread_mutex_t mutex;
-pthread_mutex_t mutex_mysql_conn;
-sem_t sem_thread;
+mos_pthread_mutex_t mutex;
+mos_pthread_mutex_t mutex_mysql_conn;
+mos_sem_t sem_thread;
 
 int main(int args,char *argv[]){
     int i;
@@ -193,9 +193,9 @@ int main(int args,char *argv[]){
 
     localresult=NULL;
 
-    pthread_mutex_init(&mutex,NULL);
-    pthread_mutex_init(&mutex_mysql_conn,NULL);
-    sem_init(&sem_thread,0,80);
+    mos_pthread_mutex_init(&mutex,NULL);
+    mos_pthread_mutex_init(&mutex_mysql_conn,NULL);
+    mos_sem_init(&sem_thread,0,80);
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
@@ -270,7 +270,7 @@ int main(int args,char *argv[]){
 
     my_bool mb=false;
     mysql_options(my_conn,MYSQL_SECURE_AUTH,&mb);
-    if(mysql_real_connect(my_conn,"127.0.0.1","igem","uestc2014!","CasDB",3306,NULL,0)){
+    if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","CasDB",3306,NULL,0)){
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
@@ -304,9 +304,9 @@ int main(int args,char *argv[]){
         strcpy(in_site[ini].pam,sql_row[4]);
         in_site[ini].ot.clear();
         strcpy(in_site[ini].chromosome,sql_row[5]);
-        pthread_mutex_lock(&mutex_mysql_conn);
+        mos_pthread_mutex_lock(&mutex_mysql_conn);
         in_site[ini].region=getRegion(atoi(sql_row[6]),atoi(sql_row[7]),atoi(sql_row[0]),atoi(sql_row[1]));
-        pthread_mutex_unlock(&mutex_mysql_conn);
+        mos_pthread_mutex_unlock(&mutex_mysql_conn);
 
         if(check_region(ini)==0){
             continue;
@@ -319,15 +319,15 @@ int main(int args,char *argv[]){
         for(int i=0;i<8;i++){
             strcpy(lr.row[i],sql_row[i]);
         }
-        
+
         sprintf(buffer,"SELECT sgrna_Sspe, sgrna_Seff, sgrna_count, sgrna_offtarget FROM Table_sgRNA WHERE sgrna_ID=%s and sgrna_offtarget IS NOT NULL",lr.row[6]);
-        pthread_mutex_lock(&mutex_mysql_conn);
+        mos_pthread_mutex_lock(&mutex_mysql_conn);
         int res=mysql_query(my_conn,buffer);
         if(res){
             printf("%s\n",mysql_error(my_conn));
         }
         MYSQL_RES *rsdc=mysql_store_result(my_conn);
-        pthread_mutex_unlock(&mutex_mysql_conn);
+        mos_pthread_mutex_unlock(&mutex_mysql_conn);
         if((sql_row=mysql_fetch_row(rsdc))){
             sscanf(sql_row[0],"%lf",&in_site[ini].Sspe_nor);
             sscanf(sql_row[1],"%lf",&in_site[ini].Seff_nor);
@@ -335,15 +335,15 @@ int main(int args,char *argv[]){
             sscanf(sql_row[2],"%d",&in_site[ini].count);
             in_site[ini].otj=cJSON_Parse(sql_row[3]);
         }else{
-            sem_wait(&sem_thread);
+            mos_sem_wait(&sem_thread);
             create_thread_socre(localresult,lr,ini,req_type,req_r1);
         }
-        
+
         ini++;
     }
 
     for(i=0;i<ini;i++){
-        if(in_site[i].ntid) pthread_join(in_site[i].ntid,NULL);
+        if(in_site[i].ntid) mos_pthread_join(in_site[i].ntid,NULL);
     }
     free_mysqlres_local(localresult);
 
@@ -382,7 +382,7 @@ int main(int args,char *argv[]){
 
         list.push_back(ans);
     }
-    //cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
+    cJSON_AddItemToObject(root,"result",Create_array_of_anything(&(list[0]),list.size()));
 
 #ifdef  _WIN32
     fprintf(fopen("D:/out.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));

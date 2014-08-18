@@ -21,9 +21,9 @@ cJSON *cJSON_otj(int ini,localrow *lr,double oscore,int omms){
     sprintf(buffer,"%s:%s",lr->row[5],lr->row[0]);
     cJSON_AddStringToObject(root,"oposition",buffer);
     cJSON_AddStringToObject(root,"ostrand",lr->row[2]);
-    pthread_mutex_lock(&mutex_mysql_conn);
+    mos_pthread_mutex_lock(&mutex_mysql_conn);
     cJSON_AddStringToObject(root,"oregion",region_info[getRegion(atoi(lr->row[6]),atoi(lr->row[7]),atoi(lr->row[0]),atoi(lr->row[1]))]);
-    pthread_mutex_unlock(&mutex_mysql_conn);
+    mos_pthread_mutex_unlock(&mutex_mysql_conn);
     return root;
 }
 
@@ -66,13 +66,13 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
     int i;
     char buffer[9182];
 
-    pthread_mutex_unlock(&mutex);
+    mos_pthread_mutex_unlock(&mutex);
     for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=65;
     else if((double)gc/(double)LEN>0.5 && (double)gc/(double)LEN<0.7) Sgc=0;
     else Sgc=35;
     if(in_site[ini].nt[19]!='G') S20=35;
-    
+
     while(lr){
     //printf("12.1\n");
         int start=atoi(lr->row[0]);
@@ -105,9 +105,9 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
     sort(&(in_site[ini].ot[0]),&(in_site[ini].ot[0])+len,cmp);
     cJSON *otj=Create_array_of_anything(&(in_site[ini].ot[0]),min(20,len));
     sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
-    pthread_mutex_lock(&mutex_mysql_conn);
+    mos_pthread_mutex_lock(&mutex_mysql_conn);
     int res=mysql_query(my_conn,buffer);
-    pthread_mutex_unlock(&mutex_mysql_conn);
+    mos_pthread_mutex_unlock(&mutex_mysql_conn);
     if(res){
         printf("%s\n\n",buffer);
         printf("%s\n",mysql_error(my_conn));
@@ -127,28 +127,28 @@ struct thread_share_variables{
 
 void *new_thread(void *args){
     int ini=thread_share_variables.ini;
-    //score(thread_share_variables.lr,thread_share_variables.row,thread_share_variables.ini,thread_share_variables.type,thread_share_variables.r1);
-  pthread_mutex_unlock(&mutex);
-    sem_post(&sem_thread);
+    score(thread_share_variables.lr,thread_share_variables.row,thread_share_variables.ini,thread_share_variables.type,thread_share_variables.r1);
+    mos_pthread_mutex_unlock(&mutex);
+    mos_sem_post(&sem_thread);
     in_site[ini].ntid=0;
-    pthread_detach(pthread_self());
+    mos_pthread_detach(mos_pthread_self());
     return NULL;
 }
 
 void create_thread_socre(localrow *lr,localrow row,int ini,int type,double r1){
-    pthread_t ntid;
-    pthread_mutex_lock(&mutex);
+    mos_pthread_t ntid;
+    mos_pthread_mutex_lock(&mutex);
     thread_share_variables.lr=lr;
     thread_share_variables.row=row;
     thread_share_variables.ini=ini;
     thread_share_variables.type=type;
     thread_share_variables.r1=r1;
 
-    int err=pthread_create(&ntid, NULL, new_thread, NULL);
+    int err=mos_pthread_create(&ntid, NULL, new_thread, NULL);
     if(err){
         printf("Pthread_create error: %s\n",strerror(err));
-        pthread_mutex_unlock(&mutex);
-        sem_post(&sem_thread);
+        mos_pthread_mutex_unlock(&mutex);
+        mos_sem_post(&sem_thread);
         return ;
     }
 
