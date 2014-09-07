@@ -162,7 +162,7 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"location\":\"NC_001144-chromosome12:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"length\":20,\"location\":\"NC_001144-chromosome12:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 localrow *localresult;
@@ -203,7 +203,7 @@ int main(int args,char *argv[]){
     cJSON *request=cJSON_Parse(req_str);
     if(check_req(request)){
         onError("illegal args");
-        return 0;
+        return -1;
     }
 
     i=1;
@@ -215,11 +215,6 @@ int main(int args,char *argv[]){
     strcpy(req_pam,cJSON_GetObjectItem(request,"pam")->valuestring);
     char req_specie[30];
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
-    if(strcmp(req_specie,"Saccharomyces-cerevisiae")==0){
-    }else{
-        onError("no specie");
-        return 0;
-    }
 
     double req_r1=0.65;
     cJSON_temp=cJSON_GetObjectItem(request,"r1");
@@ -232,7 +227,7 @@ int main(int args,char *argv[]){
     char req_id[100];
     if(cJSON_temp){
         onError("temporary not available");
-        return 0;
+        return -1;
     }else{
         strcpy(buffer,cJSON_GetObjectItem(request,"location")->valuestring);
         for(i=0;buffer[i]!=':' && buffer[i]!=0;i++){
@@ -258,6 +253,16 @@ int main(int args,char *argv[]){
     req_restrict.rfc23=req_rfc[4]-48;
     req_restrict.rfc25=req_rfc[5]-48;
 
+    req_restrict.ntlength=20;
+    cJSON_temp=cJSON_GetObjectItem(request,"length");
+    if(cJSON_temp){
+        req_restrict.ntlength=cJSON_temp->valueint;
+        if(req_restrict.ntlength>20 || req_restrict.ntlength<17){
+            onError("Invaild length! ");
+            return -1;
+        }
+    }
+
     /*
     This part above is for read in JSON-style request.
     The result stored in req_specie, req_pam, req_gene_start, req_gene_end, rfc and so on.
@@ -270,19 +275,38 @@ int main(int args,char *argv[]){
 
     my_bool mb=false;
     mysql_options(my_conn,MYSQL_SECURE_AUTH,&mb);
+#ifdef  _WIN32
     if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","CasDB",3306,NULL,0)){
+#endif // _WIN32
+#ifdef  __linux
+    if(mysql_real_connect(my_conn,"127.0.0.1","igem","uestc2014!","CasDB",3306,NULL,0)){
+#endif // __linux
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
-        return 0;
+        return -1;
     }
 
     int res;
+    sprintf(buffer,"SELECT Sno FROM Table_specie WHERE SName=\"%s\";",req_specie);
+    res=mysql_query(my_conn,buffer);
+    if(res){
+        onError("database select error1");
+        return -1;
+    }
+    MYSQL_RES *result=mysql_store_result(my_conn);
+    if((sql_row=mysql_fetch_row(result))){
+    }else{
+        onError("No such specie!");
+        return -1;
+    }
+    mysql_free_result(result);
+
     sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and pam_PAM='%s';",req_specie,req_pam);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error2");
-        return 0;
+        return -1;
     }
     MYSQL_RES *result_t=mysql_store_result(my_conn);
     make_mysqlres_local(&localresult,result_t);
@@ -293,9 +317,9 @@ int main(int args,char *argv[]){
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
-        return 0;
+        return -1;
     }
-    MYSQL_RES *result=mysql_store_result(my_conn);
+    result=mysql_store_result(my_conn);
     mysql_data_seek(result,0);
     while((sql_row=mysql_fetch_row(result))){
         in_site[ini].index=atoi(sql_row[0]);
@@ -320,7 +344,7 @@ int main(int args,char *argv[]){
             strcpy(lr.row[i],sql_row[i]);
         }
 
-        sprintf(buffer,"SELECT sgrna_Sspe, sgrna_Seff, sgrna_count, sgrna_offtarget FROM Table_sgRNA WHERE sgrna_ID=%s and sgrna_offtarget IS NOT NULL",lr.row[6]);
+        sprintf(buffer,"SELECT result_Sspe, result_Seff, result_count, result_offtarget FROM Table_sgRNA as r JOIN Table_result as t ON r.sgrna_ID=t.sgrna_ID WHERE result_ntlength=%d and r.sgrna_ID=%s and result_offtarget IS NOT NULL",req_restrict.ntlength,lr.row[6]);
         mos_pthread_mutex_lock(&mutex_mysql_conn);
         int res=mysql_query(my_conn,buffer);
         if(res){

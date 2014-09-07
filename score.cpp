@@ -33,10 +33,10 @@ double subscore(int ini,localrow *lr,int *Nph,int type){
     double smm=0;
     int nph=0;
     int i;
-    for(i=0;i<LEN;i++){
+    for(i=LEN-req_restrict.ntlength;i<LEN;i++){
         if(in_site[ini].nt[i]!=lr->row[3][i]){
             smm+=eM[i];
-            d0+=i;
+            d0+=i-(LEN-req_restrict.ntlength);
             nmm++;
         }
     }
@@ -46,7 +46,7 @@ double subscore(int ini,localrow *lr,int *Nph,int type){
         if(type==1) in_site[ini].ot.push_back(cJSON_otj(ini,lr,smm,nmm));
     }else{
         if(nmm<=NUM_NO){
-            smm=4.0*smm/(double)nmm/(double)nmm/(4.0*d0/19.0/(double)nmm+1);
+            smm=4.0*smm/(double)nmm/(double)nmm/(4.0*d0/((double)req_restrict.ntlength-1.0)/(double)nmm+1);
             if(type==1) in_site[ini].ot.push_back(cJSON_otj(ini,lr,smm,nmm));
         }else{
             smm=0.0;
@@ -71,7 +71,7 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
     if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=65;
     else if((double)gc/(double)LEN>0.5 && (double)gc/(double)LEN<0.7) Sgc=0;
     else Sgc=35;
-    if(in_site[ini].nt[19]!='G') S20=35;
+    if(in_site[ini].nt[LEN-req_restrict.ntlength]!='G') S20=35;
 
     while(lr){
     //printf("12.1\n");
@@ -104,7 +104,8 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
     int len=in_site[ini].ot.size();
     sort(&(in_site[ini].ot[0]),&(in_site[ini].ot[0])+len,cmp);
     cJSON *otj=Create_array_of_anything(&(in_site[ini].ot[0]),min(20,len));
-    sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
+    //sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
+    sprintf(buffer,"insert into Table_result set result_kind=0, result_ntlength=%d, result_Sspe=%.2f, result_Seff=%.2f, result_count=%d, result_offtarget='%s', sgrna_ID=%s; ",req_restrict.ntlength,in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
     mos_pthread_mutex_lock(&mutex_mysql_conn);
     int res=mysql_query(my_conn,buffer);
     mos_pthread_mutex_unlock(&mutex_mysql_conn);

@@ -58,6 +58,7 @@ typedef struct restrict{
     char rfc23;
     char rfc25;
     char region[5+1];
+    int ntlength;
 }restrict;
 
 struct return_struct{
