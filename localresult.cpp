@@ -1,3 +1,7 @@
+/** @file
+@brief Save data from database to RAM (or hard drive in future version).
+@author Yi Zhao
+*/
 #include "main.h"
 
 int make_mysqlres_local(localrow **localresult,MYSQL_RES *result_t){

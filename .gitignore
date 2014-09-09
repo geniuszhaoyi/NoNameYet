@@ -6,6 +6,8 @@ Database/
 json_standard/
 bin/
 obj/
+html/
+latex/
 *.o
 *.exe
 *.layout

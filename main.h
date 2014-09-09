@@ -1,3 +1,9 @@
+/** @file
+@brief Head file for whole system.
+@author Yi Zhao
+@note
+Include all necessary files, most definitions and structure definitions, as well as global variables.
+*/
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -30,6 +36,9 @@ using namespace std;
 #define DCFILE_LEN 8000000
 #define NODE_SIZE 1000000
 #define LOCALROW_LEN 120
+
+#define RETUEN_ERROR -1
+#define RETURN_SUCCEED 0
 
 typedef struct site{
     char nt[LEN+1];

@@ -1,3 +1,7 @@
+/** @file
+@brief Get region infomation.
+@author Yi Zhao
+*/
 #include "main.h"
 
 typedef struct node{

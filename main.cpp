@@ -1,6 +1,11 @@
+/** @file
+@brief Main function and some assistant functions.
+@author Yi Zhao
+*/
+
 #include "main.h"
 
-//req_GobalParameter
+///brief. hehe
 restrict req_restrict;
 
 int ini;
@@ -162,7 +167,7 @@ void onError(const char *msg){
     free(p);
 }
 
-char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"length\":20,\"location\":\"NC_001144-chromosome12:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
+char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"length\":17,\"location\":\"NC_001144-chromosome12:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
 const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
 localrow *localresult;
@@ -171,6 +176,9 @@ mos_pthread_mutex_t mutex;
 mos_pthread_mutex_t mutex_mysql_conn;
 mos_sem_t sem_thread;
 
+/**
+Main function. Include Input, output and Database create connect.
+*/
 int main(int args,char *argv[]){
     int i;
     cJSON *root;
@@ -277,10 +285,10 @@ int main(int args,char *argv[]){
     mysql_options(my_conn,MYSQL_SECURE_AUTH,&mb);
 #ifdef  _WIN32
     if(mysql_real_connect(my_conn,"127.0.0.1","root","zy19930108","CasDB",3306,NULL,0)){
-#endif // _WIN32
+#endif
 #ifdef  __linux
     if(mysql_real_connect(my_conn,"127.0.0.1","igem","uestc2014!","CasDB",3306,NULL,0)){
-#endif // __linux
+#endif
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
@@ -288,7 +296,7 @@ int main(int args,char *argv[]){
     }
 
     int res;
-    sprintf(buffer,"SELECT Sno FROM Table_specie WHERE SName=\"%s\";",req_specie);
+    sprintf(buffer,"SELECT Sno FROM Table_Specie WHERE SName=\"%s\";",req_specie);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
@@ -302,7 +310,7 @@ int main(int args,char *argv[]){
     }
     mysql_free_result(result);
 
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and pam_PAM='%s';",req_specie,req_pam);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_allsgrna WHERE SName='%s' and pam_PAM='%s';",req_specie,req_pam);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error2");
@@ -313,7 +321,7 @@ int main(int args,char *argv[]){
     localres_count(localresult);
     mysql_free_result(result_t);
 
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_getsgrna WHERE SName='%s' and pam_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_allsgrna WHERE SName='%s' and pam_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
@@ -389,7 +397,7 @@ int main(int args,char *argv[]){
         cJSON *ans=cJSON_CreateObject();
         sprintf(buffer,"#%d",i+1);
         cJSON_AddStringToObject(ans,"key",buffer);
-        sprintf(buffer,"%s%s",in_site[i].nt,in_site[i].pam);
+        sprintf(buffer,"%s%s",in_site[i].nt+(LEN-req_restrict.ntlength),in_site[i].pam);
         cJSON_AddStringToObject(ans,"grna",buffer);
         sprintf(buffer,"%s:%d",in_site[i].chromosome,in_site[i].index);
         cJSON_AddStringToObject(ans,"position",buffer);
@@ -410,7 +418,7 @@ int main(int args,char *argv[]){
 
 #ifdef  _WIN32
     fprintf(fopen("D:/out.txt","w"),"%s\n",_NomoreSpace(argv[0]=cJSON_Print(root)));
-    //printf("%d\n",strlen(NomoreSpace(argv[0])));
+    printf("%s\n",NomoreSpace(argv[0]));
 #endif // _WIN32
 #ifdef  __linux
     //printf("{\"status\":1,\"message\":\"System in maintenance\"}");

@@ -1,3 +1,7 @@
+/** @file
+@brief Include all functions about scoring and counting. 
+@author Yi Zhao
+*/
 #include "main.h"
 
 const double M[]={0,0,0.014,0,0,0.395,0.317,0,0.389,0.079,0.445,0.508,0.613,0.851,0.732,0.828,0.615,0.804,0.685,0.583};
@@ -13,7 +17,7 @@ bool cmp(cJSON *a,cJSON *b){
 cJSON *cJSON_otj(int ini,localrow *lr,double oscore,int omms){
     char buffer[4096];
     cJSON *root=cJSON_CreateObject();
-    sprintf(buffer,"%s%s",lr->row[3],lr->row[4]);
+    sprintf(buffer,"%s%s",lr->row[3]+(LEN-req_restrict.ntlength),lr->row[4]);
     cJSON_AddStringToObject(root,"osequence",buffer);
     sprintf(buffer,"%.2f",oscore);
     cJSON_AddStringToObject(root,"oscore",buffer);
