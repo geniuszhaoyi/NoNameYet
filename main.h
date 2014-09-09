@@ -36,6 +36,7 @@ using namespace std;
 #define DCFILE_LEN 8000000
 #define NODE_SIZE 1000000
 #define LOCALROW_LEN 120
+#define MAX_SEM_THREAD 80
 
 #define RETUEN_ERROR -1
 #define RETURN_SUCCEED 0
