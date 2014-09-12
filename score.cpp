@@ -97,14 +97,14 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
     char buffer[9182];
 
     mos_pthread_mutex_unlock(&mutex);
-    for(i=0;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
-    if((double)gc/(double)LEN<0.4 || (double)gc/(double)LEN>0.8) Sgc=65;
-    else if((double)gc/(double)LEN>0.5 && (double)gc/(double)LEN<0.7) Sgc=0;
+    for(i=LEN-req_restrict.ntlength;i<LEN;i++) if(in_site[ini].nt[i]=='C' || in_site[ini].nt[i]=='G') gc++;
+    in_site[ini].gc=(double)gc/(double)req_restrict.ntlength;
+    if(in_site[ini].gc<0.4 || in_site[ini].gc>0.8) Sgc=65;
+    else if(in_site[ini].gc>0.5 && in_site[ini].gc<0.7) Sgc=0;
     else Sgc=35;
     if(in_site[ini].nt[LEN-req_restrict.ntlength]!='G') S20=35;
 
     while(lr){
-    //printf("12.1\n");
         int start=atoi(lr->row[0]);
         if(in_site[ini].index!=start){
             double smm=subscore(ini,lr,&Nph,1);
@@ -134,8 +134,7 @@ void score(localrow *lr,localrow row,int ini,int type,double r1){
     int len=in_site[ini].ot.size();
     sort(&(in_site[ini].ot[0]),&(in_site[ini].ot[0])+len,cmp);
     cJSON *otj=Create_array_of_anything(&(in_site[ini].ot[0]),min(20,len));
-    //sprintf(buffer,"update Table_sgRNA set sgrna_Sspe=%.2f, sgrna_Seff=%.2f, sgrna_count=%d, sgrna_offtarget='%s' where sgrna_ID=%s; ",in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
-    sprintf(buffer,"insert into Table_result set result_kind=0, result_ntlength=%d, result_Sspe=%.2f, result_Seff=%.2f, result_count=%d, result_offtarget='%s', sgrna_ID=%s; ",req_restrict.ntlength,in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
+    sprintf(buffer,"insert into Table_result set result_kind=0, result_gc=%1.4f, result_ntlength=%d, result_Sspe=%.2f, result_Seff=%.2f, result_count=%d, result_offtarget='%s', sgrna_ID=%s; ",in_site[ini].gc,req_restrict.ntlength,in_site[ini].Sspe_nor,in_site[ini].Seff_nor,in_site[ini].count,NomoreSpace(cJSON_Print(otj)),row.row[6]);
     mos_pthread_mutex_lock(&mutex_mysql_conn);
     int res=mysql_query(my_conn,buffer);
     mos_pthread_mutex_unlock(&mutex_mysql_conn);

@@ -5,31 +5,27 @@
 
 #include "main.h"
 
-///Global restricts.
+///brief. hehe
 restrict req_restrict;
 
-int ini;///<Total number of in_site.
-site in_site[NODE_SIZE];///<Cadidate's information.
+int ini;
+site in_site[NODE_SIZE];
 
-MYSQL *my_conn;///<Mysql Connection.
+MYSQL *my_conn;
 
-///Compare sites by site.score
 bool cmp_in_site(site a,site b){
     return a.score>b.score;
 }
-///Compare sites by site.index
 bool cmp_by_index(site a,site b){
     return a.index<b.index;
 }
 
-///Read charactors until reach '\\n'
 int readLine(FILE *file){
     char ch;
     while(fscanf(file,"%c",&ch)==1) if(ch=='\n') return 1;
     return 0;
 }
 
-///Create an json array from array of cJSON. Source code are from cJSON MAN.
 cJSON *Create_array_of_anything(cJSON **objects,int num)
 {
 	int i;cJSON *prev, *root=cJSON_CreateArray();
@@ -42,13 +38,11 @@ cJSON *Create_array_of_anything(cJSON **objects,int num)
 	return root;
 }
 
-///Check if cadidate sgRNA's region matches request.
 int check_region(int i){
     int r=in_site[i].region;
     return req_restrict.region[r];
 }
 
-///Check if cadidate sgRNA matches request RFC restriction.
 int check_rfc(int i){
     char str[LEN+PAM_LEN+3];
     strcpy(str,in_site[i].nt);
@@ -101,7 +95,6 @@ int check_rfc(int i){
 }
 
 //R=A,G; M=A,C; W=A,T; S=C,G; K=G,T; Y=C,T; H=A,C,T; V=A,C,G; B=C,G,T; D=A,G,T; N=A,G,C,T
-///Check if cadidate sgRNA's PAM matches request.
 int check_pam(const char *str,const char *pam){
     for(;*pam;pam++,str++){
         if(*pam=='R' && (*str=='A' || *str=='G')) continue;
@@ -121,7 +114,6 @@ int check_pam(const char *str,const char *pam){
     return 1;
 }
 
-///Reverse DNA charactor. A-T & C-T.
 char dna_rev_char(char ch){
     if(ch=='A' || ch=='a') return 'T';
     if(ch=='T' || ch=='t') return 'A';
@@ -130,7 +122,6 @@ char dna_rev_char(char ch){
     return 'N';
 }
 
-///Get the opposite DNA seqence.
 char *dna_rev(char *sr,const char *s,int len){
     int i;
     for(i=0;i<len;i++){
@@ -140,7 +131,6 @@ char *dna_rev(char *sr,const char *s,int len){
     return sr;
 }
 
-///Remove all non-readable charactors from string(char*).
 char *NomoreSpace(char *str){
     int i,j;
     int mark=0;
@@ -152,12 +142,10 @@ char *NomoreSpace(char *str){
     return str;
 }
 
-///Not remove all non-readable charactors from string(char*). @deprecated Only for debug.
 char *_NomoreSpace(char *str){
     return str;
 }
 
-///Check request json.
 int check_req(cJSON *request){
     int clt=3;
     int i;
@@ -168,7 +156,6 @@ int check_req(cJSON *request){
     return i<clt;
 }
 
-///Print error message.
 void onError(const char *msg){
     char *p;
 
@@ -180,19 +167,14 @@ void onError(const char *msg){
     free(p);
 }
 
-///Default request.
 char argv_default[]="{\"specie\":\"Saccharomyces-cerevisiae\",\"length\":17,\"location\":\"NC_001144-chromosome12:1..500\",\"pam\":\"NGG\",\"rfc\":\"100010\"}";
-const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};///<Name of region. @see REGION_EXON, REGION_INTRON, REGION_UTR, REGION_INTERGENIC, REGION_GENE
+const char *region_info[]={"","EXON","INTRON","UTR","INTERGENIC"};
 
-/**
-@brief Root pointer for saved possible-offtarget sgRNA's information.
-@see localresult.cpp
-*/
 localrow *localresult;
 
-mos_pthread_mutex_t mutex;///<Mutex for thread_share_variables. @see create_thread_socre, new_thread
-mos_pthread_mutex_t mutex_mysql_conn;///<Mutex for mysql_connextion(my_conn). @see my_conn
-mos_sem_t sem_thread;///<Semaphore for thread. Number of thread cann't exceed MAX_SEM_THREAD. @see MAX_SEM_THREAD
+mos_pthread_mutex_t mutex;
+mos_pthread_mutex_t mutex_mysql_conn;
+mos_sem_t sem_thread;
 
 /**
 Main function. Include Input, output and Database create connect.
@@ -221,7 +203,7 @@ int main(int args,char *argv[]){
 
     mos_pthread_mutex_init(&mutex,NULL);
     mos_pthread_mutex_init(&mutex_mysql_conn,NULL);
-    mos_sem_init(&sem_thread,0,MAX_SEM_THREAD);
+    mos_sem_init(&sem_thread,0,80);
 
     char *req_str=argv_default;
     if(args==2) req_str=argv[1];
@@ -229,7 +211,7 @@ int main(int args,char *argv[]){
     cJSON *request=cJSON_Parse(req_str);
     if(check_req(request)){
         onError("illegal args");
-        return RETUEN_ERROR;
+        return -1;
     }
 
     i=1;
@@ -253,7 +235,7 @@ int main(int args,char *argv[]){
     char req_id[100];
     if(cJSON_temp){
         onError("temporary not available");
-        return RETUEN_ERROR;
+        return -1;
     }else{
         strcpy(buffer,cJSON_GetObjectItem(request,"location")->valuestring);
         for(i=0;buffer[i]!=':' && buffer[i]!=0;i++){
@@ -285,7 +267,7 @@ int main(int args,char *argv[]){
         req_restrict.ntlength=cJSON_temp->valueint;
         if(req_restrict.ntlength>20 || req_restrict.ntlength<17){
             onError("Invaild length! ");
-            return RETUEN_ERROR;
+            return -1;
         }
     }
 
@@ -310,7 +292,7 @@ int main(int args,char *argv[]){
     }else{
         sprintf(buffer,"database connect error\n$%s",mysql_error(my_conn));
         onError(buffer);
-        return RETUEN_ERROR;
+        return -1;
     }
 
     int res;
@@ -318,13 +300,13 @@ int main(int args,char *argv[]){
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
-        return RETUEN_ERROR;
+        return -1;
     }
     MYSQL_RES *result=mysql_store_result(my_conn);
     if((sql_row=mysql_fetch_row(result))){
     }else{
         onError("No such specie!");
-        return RETUEN_ERROR;
+        return -1;
     }
     mysql_free_result(result);
 
@@ -332,7 +314,7 @@ int main(int args,char *argv[]){
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error2");
-        return RETUEN_ERROR;
+        return -1;
     }
     MYSQL_RES *result_t=mysql_store_result(my_conn);
     make_mysqlres_local(&localresult,result_t);
@@ -343,7 +325,7 @@ int main(int args,char *argv[]){
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
-        return RETUEN_ERROR;
+        return -1;
     }
     result=mysql_store_result(my_conn);
     mysql_data_seek(result,0);
@@ -370,7 +352,7 @@ int main(int args,char *argv[]){
             strcpy(lr.row[i],sql_row[i]);
         }
 
-        sprintf(buffer,"SELECT result_Sspe, result_Seff, result_count, result_offtarget FROM Table_sgRNA as r JOIN Table_result as t ON r.sgrna_ID=t.sgrna_ID WHERE result_ntlength=%d and r.sgrna_ID=%s and result_offtarget IS NOT NULL",req_restrict.ntlength,lr.row[6]);
+        sprintf(buffer,"SELECT result_Sspe, result_Seff, result_count, result_offtarget, result_gc FROM Table_sgRNA as r JOIN Table_result as t ON r.sgrna_ID=t.sgrna_ID WHERE result_ntlength=%d and r.sgrna_ID=%s and result_offtarget IS NOT NULL",req_restrict.ntlength,lr.row[6]);
         mos_pthread_mutex_lock(&mutex_mysql_conn);
         int res=mysql_query(my_conn,buffer);
         if(res){
@@ -383,6 +365,7 @@ int main(int args,char *argv[]){
             sscanf(sql_row[1],"%lf",&in_site[ini].Seff_nor);
             in_site[ini].score=req_r1*in_site[ini].Sspe_nor+(1-req_r1)*in_site[ini].Seff_nor;
             sscanf(sql_row[2],"%d",&in_site[ini].count);
+            sscanf(sql_row[4],"%lf",&in_site[ini].gc);
             in_site[ini].otj=cJSON_Parse(sql_row[3]);
         }else{
             mos_sem_wait(&sem_thread);
@@ -425,6 +408,7 @@ int main(int args,char *argv[]){
         cJSON_AddStringToObject(ans,"strand",xs);
         cJSON_AddStringToObject(ans,"region",region_info[in_site[i].region]);
         cJSON_AddNumberToObject(ans,"total_score",(int)in_site[i].score);
+        cJSON_AddNumberToObject(ans,"GC",in_site[i].gc);
         cJSON_AddNumberToObject(ans,"Sspe",(int)(req_r1*in_site[i].Sspe_nor));
         cJSON_AddNumberToObject(ans,"Seff",(int)((1.0-req_r1)*in_site[i].Seff_nor));
         cJSON_AddNumberToObject(ans,"count",in_site[i].count);
@@ -447,5 +431,5 @@ int main(int args,char *argv[]){
     mysql_free_result(result);
     mysql_close(my_conn);
 
-    return RETURN_SUCCEED;
+    return 0;
 }

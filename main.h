@@ -49,6 +49,7 @@ typedef struct site{
     char chromosome[100];
     int region;
     char strand;
+    double gc;
     double score,Sspe_nor,Seff_nor;
     vector <cJSON*> ot;
     cJSON *otj;
