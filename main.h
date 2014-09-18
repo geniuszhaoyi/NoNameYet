@@ -101,6 +101,8 @@ void create_thread_socre(localrow *lr,localrow row,int ini,int type,double r1);
 char *NomoreSpace(char *str);
 char *_NomoreSpace(char *str);
 
+int get_gene_info(char*,const char*,const char*);
+
 int get_Chr_No(const char*,const char*);
 cJSON *getlineregion(int,int,int);
 int getRegion(int sgrna_ID,int Chr_No,int sgrna_start,int sgrna_end);

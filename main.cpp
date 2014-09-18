@@ -223,26 +223,26 @@ int main(int args,char *argv[]){
     strcpy(req_pam,cJSON_GetObjectItem(request,"pam")->valuestring);
     char req_specie[30];
     strcpy(req_specie,cJSON_GetObjectItem(request,"specie")->valuestring);
-
     double req_r1=0.65;
     cJSON_temp=cJSON_GetObjectItem(request,"r1");
-    if(cJSON_temp){
-        req_r1=cJSON_GetObjectItem(request,"r1")->valuedouble;
-    }
+    if(cJSON_temp) req_r1=cJSON_temp->valuedouble;
 
     cJSON_temp=cJSON_GetObjectItem(request,"gene");
     int req_gene_start,req_gene_end;
-    char req_id[100];
+    char req_chromosome[100];
     if(cJSON_temp){
-        onError("temporary not available");
-        return -1;
+        int res=get_gene_info(buffer,req_specie,cJSON_temp->valuestring);
+        if(res){
+            onError("Invaild Gene! ");
+            return -1;
+        }
     }else{
         strcpy(buffer,cJSON_GetObjectItem(request,"location")->valuestring);
-        for(i=0;buffer[i]!=':' && buffer[i]!=0;i++){
-            req_id[i]=buffer[i];
-        }req_id[i]=0;
-        sscanf(buffer+i+1,"%d..%d",&req_gene_start,&req_gene_end);
     }
+    for(i=0;buffer[i]!=':' && buffer[i]!=0;i++){
+        req_chromosome[i]=buffer[i];
+    }req_chromosome[i]=0;
+    sscanf(buffer+i+1,"%d..%d",&req_gene_start,&req_gene_end);
 
     cJSON_temp=cJSON_GetObjectItem(request,"region");
     if(cJSON_temp){
@@ -321,7 +321,7 @@ int main(int args,char *argv[]){
     localres_count(localresult);
     mysql_free_result(result_t);
 
-    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_allsgrna WHERE SName='%s' and pam_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"SELECT sgrna_start, sgrna_end, sgrna_strand, sgrna_seq, sgrna_PAM, Chr_Name, sgrna_ID, Chr_No FROM view_allsgrna WHERE SName='%s' and pam_PAM='%s' and Chr_Name='%s' and sgrna_start>=%d and sgrna_end<=%d;",req_specie,req_pam,req_chromosome,req_gene_start,req_gene_end);
     res=mysql_query(my_conn,buffer);
     if(res){
         onError("database select error1");
@@ -387,9 +387,9 @@ int main(int args,char *argv[]){
 
     cJSON_AddStringToObject(root,"specie",req_specie);
     cJSON_AddStringToObject(root,"gene",req_gene);
-    sprintf(buffer,"%s:%d..%d",req_id,req_gene_start,req_gene_end);
+    sprintf(buffer,"%s:%d..%d",req_chromosome,req_gene_start,req_gene_end);
     cJSON_AddStringToObject(root,"location",buffer);
-    cJSON_temp=getlineregion(get_Chr_No(req_specie,req_id),req_gene_start,req_gene_end);    //temporary change
+    cJSON_temp=getlineregion(get_Chr_No(req_specie,req_chromosome),req_gene_start,req_gene_end);    //temporary change
     if(cJSON_temp) cJSON_AddItemToObject(root,"region",cJSON_temp);
 
     vector<cJSON*> list;

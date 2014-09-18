@@ -40,12 +40,7 @@ int get_Chr_No(const char *specie,const char *chr_name){
 
 /**
 @brief Compare two type of region.
-@note priority:\n
-GENE 0\n
-UTR 1\n
-EXON 2\n
-INTRON 3\n
-INTERGENIC 4\n
+@note priority:\nGENE 0\nUTR 1\nEXON 2\nINTRON 3\nINTERGENIC 4.
 @see REGION_EXON, REGION_INTRON, REGION_UTR, REGION_INTERGENIC, REGION_GENE
 */
 int region_wmin(int a,int b){
@@ -136,6 +131,7 @@ cJSON *getlineregion(int Chr_No,int start,int end){
 
 /**
 @brief Get region infomation of an sgRNA.
+@return region type of the sgRNA
 @see REGION_EXON, REGION_INTRON, REGION_UTR, REGION_INTERGENIC, REGION_GENE
 */
 int getRegion(int sgrna_ID,int Chr_No,int sgrna_start,int sgrna_end){
